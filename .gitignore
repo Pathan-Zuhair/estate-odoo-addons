@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Odoo
+*.log
+
+# Virtual environment
+venv/
+.env
+
+# IDEs
+.idea/
+.vscode/
+
+# macOS
+.DS_Store

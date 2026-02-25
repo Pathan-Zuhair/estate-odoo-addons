@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Top-level menu -->
+    <menuitem
+        id="menu_estate_root"
+        name="Real Estate"
+        sequence="10"
+    />
+
+    <!-- Second-level menu -->
+    <menuitem
+        id="menu_estate_properties"
+        name="Real estate"
+        parent="menu_estate_root"
+        sequence="10"
+    />
+
+    <!-- Third-level menu (linked to Properties action) -->
+    <menuitem
+        id="menu_estate_properties_action"
+        name="Properties"
+        parent="menu_estate_properties"
+        action="action_estate_property"
+        sequence="10"
+    />
+
+    <!-- Second-level menu: Configuration -->
+    <menuitem
+        id="menu_estate_configuration"
+        name="Configuration"
+        parent="menu_estate_root"
+        sequence="20"
+    />
+
+    <!-- Third-level menu: Property Types -->
+    <menuitem
+        id="menu_estate_property_type"
+        name="Property Types"
+        parent="menu_estate_configuration"
+        action="estate_property_type_action"
+        sequence="10"
+    />
+
+    <menuitem
+    id="menu_estate_property_tag"
+    name="Property Tags"
+    parent="menu_estate_configuration"
+    action="estate_property_tag_action"
+    sequence="20"
+    />
+
+</odoo>
