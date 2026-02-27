@@ -4,7 +4,7 @@
     'summary': 'A Ready To Use Module For Real Estate Business',
     'category': 'Tutorial',
     'author': 'Zuhair',
-    'depends': ['base'],
+    'depends': ['base','account'],
     'sequence': 1,
     'data': [
         'security/ir.model.access.csv',

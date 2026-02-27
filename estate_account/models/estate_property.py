@@ -1,9 +1,22 @@
-from odoo import models
+from odoo import models, fields, api
 from odoo.exceptions import UserError
 
 
 class EstateProperty(models.Model):
     _inherit = 'estate.property'
+
+    invoice_ids = fields.Many2one(
+        'account.move',
+        compute='_compute_invoice_ids',
+        string='Invoices',
+    )
+
+    @api.depends('state')
+    def _compute_invoice_ids(self):
+        for record in self:
+            record.invoice_ids = self.env['account.move'].search([
+                ('property_id', '=', record.id),
+            ])
 
     def action_sold(self):
         for record in self:
@@ -17,25 +30,22 @@ class EstateProperty(models.Model):
             commission = selling_price * 0.06
             admin_fee = 100.0
 
+            # 1️⃣ Create the invoice and link to property
             invoice = self.env['account.move'].create({
                 'move_type': 'out_invoice',
                 'partner_id': record.buyer_id.id,
+                'property_id': record.id,  # <-- link to property
                 'invoice_line_ids': [
-                    # 1️⃣ Property price
                     (0, 0, {
                         'name': 'Property Selling Price',
                         'quantity': 1,
                         'price_unit': selling_price,
                     }),
-
-                    # 2️⃣ 6% commission
                     (0, 0, {
                         'name': '6% Commission',
                         'quantity': 1,
                         'price_unit': commission,
                     }),
-
-                    # 3️⃣ Administrative fee
                     (0, 0, {
                         'name': 'Administrative Fees',
                         'quantity': 1,
@@ -46,4 +56,5 @@ class EstateProperty(models.Model):
 
             print("Invoice created:", invoice.id)
 
+        # ✅ Call the original action_sold to change state etc.
         return super().action_sold()

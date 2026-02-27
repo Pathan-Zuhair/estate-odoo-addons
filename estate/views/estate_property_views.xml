@@ -284,14 +284,36 @@
 
         <!-- DEFAULT FILTER -->
     <field name="context">
-        {'search_default_available': 1}
-    </field>
-
-    <!-- ✅ Default Grouping by Property Type -->
-    <field name="context">
-        {'group_by': 'property_type_id'}
-    </field>
-
+    {
+        'search_default_available': 1,
+        'group_by': 'property_type_id'
+    }
+</field>
     </record>
+     <!-- Action for sold property invoices -->
+    <record id="action_estate_property_sold_invoices" model="ir.actions.act_window">
+        <field name="name">Sold Property Invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('move_type','=','out_invoice'),('property_sold','=',True)]</field>
+        <field name="context">{'default_move_type':'out_invoice'}</field>
+    </record>
+
+    <!-- Top-level menu -->
+    <menuitem
+        id="menu_estate_invoice_root"
+        name="Invoice"
+        parent="menu_estate_root"
+        sequence="30"
+    />
+
+    <!-- Submenu: Sold Property Invoices -->
+    <menuitem
+        id="menu_estate_invoices"
+        name="Invoices"
+        parent="menu_estate_invoice_root"
+        action="action_estate_property_sold_invoices"
+        sequence="10"
+    />
 
 </odoo>
