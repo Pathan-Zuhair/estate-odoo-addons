@@ -15,7 +15,7 @@
             <!-- REQUIRED FIELDS FOR DECORATION -->
             <field name="status" invisible="1"/>
             <field name="property_type_id"/>
-            <field name="property_state" invisible="1"/>
+<!--            <field name="property_state" invisible="1"/>-->
 
             <field name="price"/>
             <field name="partner_id"/>
@@ -26,12 +26,14 @@
                     type="object"
                     icon="fa-check"
                     class="btn-primary"
+                    groups="estate.group_estate_manager"
                     invisible="status in ('accepted','refused')"/>
 
             <button name="action_refuse"
                     type="object"
                     icon="fa-times"
                     class="btn-secondary"
+                    groups="estate.group_estate_manager"
                     invisible="status in ('accepted','refused')"/>
 
         </list>

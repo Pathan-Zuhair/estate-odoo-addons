@@ -50,4 +50,21 @@
     sequence="20"
     />
 
+
+     <!-- Top-level menu -->
+    <menuitem
+        id="menu_estate_invoice_root"
+        name="Invoice"
+        parent="menu_estate_root"
+        sequence="30"
+    />
+
+    <!-- Submenu: Sold Property Invoices -->
+    <menuitem
+        id="menu_estate_invoices"
+        name="Invoices"
+        parent="menu_estate_invoice_root"
+        action="action_estate_property_sold_invoices"
+        sequence="10"
+    />
 </odoo>

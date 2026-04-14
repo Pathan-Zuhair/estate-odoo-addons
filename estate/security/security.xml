@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!--  Custom Category -->
+    <record id="module_category_estate" model="ir.module.category">
+        <field name="name">Real Estate</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <!--  Estate User -->
+    <record id="group_estate_user" model="res.groups">
+        <field name="name">Estate User</field>
+        <field name="category_id" ref="estate.module_category_estate"/>
+    </record>
+
+    <!--  Estate Manager (inherits user) -->
+    <record id="group_estate_manager" model="res.groups">
+        <field name="name">Estate Manager</field>
+        <field name="category_id" ref="estate.module_category_estate"/>
+        <field name="implied_ids" eval="[(4, ref('estate.group_estate_user'))]"/>
+    </record>
+
+</odoo>
