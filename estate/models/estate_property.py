@@ -27,6 +27,7 @@ class EstateProperty(models.Model):
         if (
             view_type == 'form'
             and self.env.user.has_group('estate.group_estate_user')
+            and not self.env.user.has_group('estate.group_estate_seller')
             and not self.env.user.has_group('estate.group_estate_manager')
         ):
             for node in arch.xpath("//field[@name]"):
@@ -46,6 +47,24 @@ class EstateProperty(models.Model):
 
     #  BACKEND SECURITY: Prevent unauthorized property edits
 
+    def _is_estate_seller(self):
+        user = self.env.user
+        return user.has_group('estate.group_estate_seller') and not user.has_group(
+            'estate.group_estate_manager'
+        )
+
+    def _require_property_action_access(self):
+        if self.env.su:
+            return
+
+        if not (
+            self.env.user.has_group('estate.group_estate_manager')
+            or self.env.user.has_group('estate.group_estate_seller')
+        ):
+            raise AccessError(
+                _("Only Estate Managers and Estate Sellers can change property status.")
+            )
+
     def write(self, vals):
         """
         Enforces strict backend security:
@@ -64,9 +83,24 @@ class EstateProperty(models.Model):
         if vals and not self.env.su:
             user = self.env.user
 
+            if self._is_estate_seller():
+                allowed_seller_vals = {'state'}
+                if set(vals) - allowed_seller_vals:
+                    raise AccessError(
+                        _("Estate Sellers can only change the property state to sold or cancelled.")
+                    )
+
+                allowed_states = {'sold', 'cancelled'}
+                if vals.get('state') not in allowed_states:
+                    raise AccessError(
+                        _("Estate Sellers can only change the property state to sold or cancelled.")
+                    )
+
             # Apply restriction only to Estate Users (not managers)
-            if user.has_group('estate.group_estate_user') and not user.has_group(
-                'estate.group_estate_manager'
+            if (
+                user.has_group('estate.group_estate_user')
+                and not user.has_group('estate.group_estate_seller')
+                and not user.has_group('estate.group_estate_manager')
             ):
                 keys = set(vals)
 
@@ -93,6 +127,15 @@ class EstateProperty(models.Model):
                     )
 
         return super().write(vals)
+
+    def unlink(self):
+        if not self.env.su and self._is_estate_seller():
+            locked_properties = self.filtered(lambda record: record.state == 'offer_accepted')
+            if locked_properties:
+                raise AccessError(
+                    _("Estate Sellers cannot delete properties once an offer is accepted.")
+                )
+        return super().unlink()
 
     #  SQL CONSTRAINTS
 
@@ -239,30 +282,28 @@ class EstateProperty(models.Model):
     def action_cancel(self):
         """
         Cancel property:
-        - Only managers allowed
+        - Only managers and sellers allowed
         - Cannot cancel sold property
         """
-        if not self.env.su and not self.env.user.has_group('estate.group_estate_manager'):
-            raise AccessError(_("Only Estate Managers can cancel a property."))
+        self._require_property_action_access()
 
         for record in self:
             if record.state == 'sold':
                 raise UserError("A sold property cannot be cancelled.")
-            record.state = 'cancelled'
+            record.write({'state': 'cancelled'})
 
     def action_sold(self):
         """
         Mark property as sold:
-        - Only managers allowed
+        - Only managers and sellers allowed
         - Cannot sell cancelled property
         """
-        if not self.env.su and not self.env.user.has_group('estate.group_estate_manager'):
-            raise AccessError(_("Only Estate Managers can mark a property as sold."))
+        self._require_property_action_access()
 
         for record in self:
             if record.state == 'cancelled':
                 raise UserError("A cancelled property cannot be sold.")
-            record.state = 'sold'
+            record.write({'state': 'sold'})
 
 
     #  BUSINESS CONSTRAINTS

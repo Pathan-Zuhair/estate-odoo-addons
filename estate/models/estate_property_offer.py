@@ -3,7 +3,6 @@ from datetime import timedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 from odoo.tools.float_utils import float_compare
-from datetime import date
 
 
 class EstatePropertyOffer(models.Model):
@@ -15,116 +14,64 @@ class EstatePropertyOffer(models.Model):
         (
             'check_offer_price_positive',
             'CHECK(price > 0)',
-            'The offer price must be strictly positive.'
+            'The offer price must be strictly positive.',
         ),
     ]
 
     price = fields.Float(required=True)
-
     status = fields.Selection(
         [
             ('accepted', 'Accepted'),
             ('refused', 'Refused'),
         ],
-        copy=False
+        copy=False,
     )
-
     property_state = fields.Selection(
         related='property_id.state',
         store=True,
-        readonly=True
+        readonly=True,
     )
-
     property_type_id = fields.Many2one(
         'estate.property.type',
         related='property_id.property_type_id',
         store=True,
-        readonly=True
+        readonly=True,
     )
-
-    partner_id = fields.Many2one(
-        'res.partner',
-        string='Buyer',
-        required=True
-    )
-
-    property_id = fields.Many2one(
-        'estate.property',
-        string='Property',
-        required=True
-    )
-
-
-    validity = fields.Integer(
-        string='Validity (days)',
-        default=7
-    )
-
+    partner_id = fields.Many2one('res.partner', string='Buyer', required=True)
+    property_id = fields.Many2one('estate.property', string='Property', required=True)
+    validity = fields.Integer(string='Validity (days)', default=7)
     date_deadline = fields.Date(
         string='Deadline',
         compute='_compute_date_deadline',
         inverse='_inverse_date_deadline',
-        store=True
+        store=True,
     )
 
-    # SECURITY: Restrict status change to managers only
-    def _require_offer_status_manager(self):
+    def _is_estate_seller(self):
+        user = self.env.user
+        return user.has_group('estate.group_estate_seller') and not user.has_group(
+            'estate.group_estate_manager'
+        )
+
+    def _require_offer_status_access(self):
         if self.env.su:
             return
-        if not self.env.user.has_group('estate.group_estate_manager'):
-            raise AccessError(_("Only Estate Managers can change the offer status."))
 
-    #  VALIDATION ADDED HERE (WRITE)
-    def write(self, vals):
-        user = self.env.user
+        if not (
+            self.env.user.has_group('estate.group_estate_manager')
+            or self.env.user.has_group('estate.group_estate_seller')
+        ):
+            raise AccessError(_("Only Estate Managers and Estate Sellers can update offer status."))
 
-        for record in self:
-            # Restrict ONLY Estate Users (not managers)
-            if (
-                user.has_group('estate.group_estate_user')
-                and not user.has_group('estate.group_estate_manager')
-            ):
-                if record.status in ('accepted', 'refused'):
-                    raise AccessError(_("You cannot modify an offer that is already accepted or refused."))
+    def _check_property_not_sold_for_status_action(self):
+        sold_offers = self.filtered(lambda offer: offer.property_id.state == 'sold')
+        if sold_offers:
+            raise AccessError(_("You cannot change offers for a property that is already sold."))
 
-            #  PRICE VALIDATION ON EDIT
-            new_price = vals.get('price', record.price)
-            property_rec = record.property_id
-            min_price = property_rec.expected_price * 0.9
-
-            if float_compare(new_price, min_price, precision_rounding=0.01) < 0:
-                raise UserError(
-                    _("Offer price cannot be less than 90% of expected price.")
-                )
-
-        # Only manager can change status
-        if 'status' in vals:
-            self._require_offer_status_manager()
-
-        return super().write(vals)
-
-    def unlink(self):
-        for record in self:
-
-            #  Estate User restriction
-            if (
-                    self.env.user.has_group('estate.group_estate_user')
-                    and not self.env.user.has_group('estate.group_estate_manager')
-            ):
-                if record.status in ('accepted', 'refused'):
-                    raise AccessError(
-                        _("You cannot delete an offer that is already accepted or refused.")
-                    )
-
-        return super().unlink()
-
-    # @api.ondelete(at_uninstall=False)
-    # def _check_delete_offer(self):
-    #     for record in self:
-    #         if record.status in ('accepted', 'refused'):
-    #             raise UserError(
-    #                 "You cannot delete an offer that is already accepted or refused."
-    #             )
+    def _check_offer_price(self, price, property_rec):
+        min_price = property_rec.expected_price * 0.9
+        if float_compare(price, min_price, precision_rounding=0.01) < 0:
+            raise UserError(_("Offer price cannot be less than 90% of expected price."))
 
     @api.depends('create_date', 'validity')
     def _compute_date_deadline(self):
@@ -137,67 +84,105 @@ class EstatePropertyOffer(models.Model):
             if record.create_date and record.date_deadline:
                 record.validity = (record.date_deadline - record.create_date.date()).days
 
-    #  VALIDATION ADDED HERE (CREATE)
-    @api.model
-    def create(self, vals):
-        if vals.get('status'):
-            self._require_offer_status_manager()
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.su and self._is_estate_seller():
+            raise AccessError(_("Estate Sellers cannot create offers."))
 
-        property_id = vals.get('property_id')
-        price = vals.get('price')
+        for vals in vals_list:
+            if vals.get('status'):
+                self._require_offer_status_access()
 
-        if property_id and price:
+            property_id = vals.get('property_id')
+            price = vals.get('price')
+            if not property_id or price is None:
+                continue
+
             property_rec = self.env['estate.property'].browse(property_id)
-
-            # Existing offer check
             existing_offers = property_rec.offer_ids.mapped('price')
             if existing_offers and price < max(existing_offers):
-                raise UserError(
-                    "You cannot create an offer lower than an existing offer."
-                )
+                raise UserError(_("You cannot create an offer lower than an existing offer."))
 
-            #  90% VALIDATION HERE
-            min_price = property_rec.expected_price * 0.9
-            if float_compare(price, min_price, precision_rounding=0.01) < 0:
-                raise UserError(
-                    _("Offer price cannot be less than 90% of expected price.")
-                )
+            self._check_offer_price(price, property_rec)
 
-        offer = super().create(vals)
+        offers = super().create(vals_list)
+        for offer in offers.filtered(lambda record: record.property_id.state == 'new'):
+            offer.property_id.sudo().write({'state': 'offer_received'})
+        return offers
 
-        if property_id:
-            property_rec.sudo().write({'state': 'offer_received'})
+    def write(self, vals):
+        if not self.env.su and self._is_estate_seller():
+            if 'status' in vals:
+                self._check_property_not_sold_for_status_action()
+            raise AccessError(_("Estate Sellers cannot edit offers."))
 
-        return offer
+        if 'status' in vals:
+            self._require_offer_status_access()
+
+        for record in self:
+            if 'price' in vals:
+                new_price = vals['price']
+                self._check_offer_price(new_price, record.property_id)
+
+        return super().write(vals)
+
+    def unlink(self):
+        if not self.env.su:
+            user = self.env.user
+
+            if self._is_estate_seller():
+                raise AccessError(_("Estate Sellers cannot delete offers."))
+
+            if (
+                user.has_group('estate.group_estate_user')
+                and not user.has_group('estate.group_estate_manager')
+            ):
+                accepted_offers = self.filtered(lambda offer: offer.status == 'accepted')
+                if accepted_offers:
+                    raise AccessError(
+                        _("Estate Users cannot delete offers whose status is accepted.")
+                    )
+
+        return super().unlink()
+
+    def action_delete_offer(self):
+        self.unlink()
+        return True
 
     def action_accept(self):
-        self._require_offer_status_manager()
+        self._require_offer_status_access()
+        self._check_property_not_sold_for_status_action()
 
         for offer in self:
-            property_rec = offer.property_id
-
-            #  CASE 1: Same offer already accepted
             if offer.status == 'accepted':
-                raise UserError(_("This offer is already accepted."))
+                continue
 
-            #  CASE 2: Another offer already accepted
-            accepted_offer = property_rec.offer_ids.filtered(
-                lambda o: o.status == 'accepted'
+            accepted_offer = offer.property_id.offer_ids.filtered(
+                lambda current_offer: current_offer.status == 'accepted' and current_offer.id != offer.id
             )
-
             if accepted_offer:
                 raise UserError(_("Only one offer can be accepted for a property."))
 
-            #  Accept current offer
-            offer.status = 'accepted'
-
-            property_rec.sudo().write({
-                'buyer_id': offer.partner_id.id,
-                'selling_price': offer.price,
-                'state': 'offer_accepted',
-            })
+            offer.sudo().write({'status': 'accepted'})
+            offer.property_id.sudo().write(
+                {
+                    'buyer_id': offer.partner_id.id,
+                    'selling_price': offer.price,
+                    'state': 'offer_accepted',
+                }
+            )
 
     def action_refuse(self):
-        self._require_offer_status_manager()
-        self.write({'status': 'refused'})
+        self._require_offer_status_access()
+        self._check_property_not_sold_for_status_action()
 
+        for offer in self:
+            if offer.status == 'accepted':
+                offer.property_id.sudo().write(
+                    {
+                        'buyer_id': False,
+                        'selling_price': 0.0,
+                        'state': 'offer_received',
+                    }
+                )
+            offer.sudo().write({'status': 'refused'})

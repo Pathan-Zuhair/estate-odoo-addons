@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- ============================= -->
     <!-- Estate Property List View -->
-    <!-- ============================= -->
     <record id="estate_property_list_view" model="ir.ui.view">
         <field name="name">estate.property.list</field>
         <field name="model">estate.property</field>
@@ -26,16 +24,14 @@
         </field>
     </record>
 
-    <!-- ============================= -->
     <!-- Estate Property Form View -->
-    <!-- ============================= -->
     <record id="estate_property_form_view" model="ir.ui.view">
         <field name="name">estate.property.form</field>
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
             <form string="Property" edit="true">
 
-                <!-- 🔹 HEADER: STATUSBAR + ACTION BUTTONS -->
+                <!--  HEADER: STATUSBAR + ACTION BUTTONS -->
                 <header>
 
                     <!-- STATUS BAR -->
@@ -48,7 +44,7 @@
                             type="object"
                             string="Sold"
                             class="btn-primary"
-                            groups="estate.group_estate_manager"
+                            groups="estate.group_estate_manager,estate.group_estate_seller"
                             invisible="state in ('sold','cancelled')"/>
 
                     <!-- CANCEL BUTTON -->
@@ -56,7 +52,7 @@
                             type="object"
                             string="Cancel"
                             class="btn-secondary"
-                            groups="estate.group_estate_manager"
+                            groups="estate.group_estate_manager,estate.group_estate_seller"
                             invisible="state in ('sold','cancelled')"/>
 
                 </header>
@@ -123,42 +119,102 @@
                         <!-- OFFERS -->
                         <page string="Offers">
 
-                            <field name="offer_ids" groups="estate.group_estate_user">
+                            <field name="offer_ids" groups="estate.group_estate_seller">
+                                <list
+                                    create="false"
+                                    delete="false"
+                                    edit="false"
+                                    decoration-success="status == 'accepted'"
+                                    decoration-danger="status == 'refused' or property_state == 'cancelled'"
+                                >
 
-                                <list editable="bottom"
-                                      decoration-success="status == 'accepted'"
-                                      decoration-danger="status == 'refused' or property_state == 'cancelled'">
+                                    <field name="property_state" optional="hide"/>
+                                    <field name="partner_id"/>
+                                    <field name="price"/>
+                                    <field name="validity"/>
+                                    <field name="date_deadline"/>
+                                    <button
+                                        name="action_accept"
+                                        type="object"
+                                        icon="fa-check"
+                                        class="btn-primary"
+                                        invisible="status == 'accepted' or property_state == 'sold'"
+                                    />
+                                    <button
+                                        name="action_refuse"
+                                        type="object"
+                                        icon="fa-times"
+                                        class="btn-secondary"
+                                        invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
+                                    />
+                                    <field name="status" invisible="1"/>
+                                </list>
+                            </field>
+
+                            <field name="offer_ids" groups="estate.group_estate_user,!estate.group_estate_manager,!estate.group_estate_seller">
+                                <list
+                                    editable="bottom"
+                                    delete="false"
+                                    decoration-success="status == 'accepted'"
+                                    decoration-danger="status == 'refused' or property_state == 'cancelled'">
 
 
-                                    <!-- HIDDEN FIELDS -->
-<!--                                    <field name="status" invisible="1"/>-->
-<!--                                    <field name="property_state" invisible="1"/>-->
+                                    <field name="property_state" optional="hide"/>
+                                    <field name="partner_id"/>
+                                    <field name="price"/>
+                                    <field name="validity"/>
+                                    <field name="date_deadline"/>
+                                    <button
+                                        name="action_delete_offer"
+                                        type="object"
+                                        icon="fa-trash"
+                                        class="btn-link text-danger"
+                                        invisible="status == 'accepted'"
+                                    />
+                                    <field name="status" invisible="1"/>
+                                </list>
+                            </field>
 
-                                    <!-- MAIN FIELDS -->
+                            <field name="offer_ids" groups="estate.group_estate_manager,!estate.group_estate_seller">
+                                <list
+                                    editable="bottom"
+                                    delete="false"
+                                    decoration-success="status == 'accepted'"
+                                    decoration-danger="status == 'refused' or property_state == 'cancelled'"
+                                >
+
+                                    <field name="property_state" optional="hide"/>
                                     <field name="partner_id"/>
                                     <field name="price"/>
                                     <field name="validity"/>
                                     <field name="date_deadline"/>
 
-                                    <!-- MANAGER ONLY BUTTONS -->
-                                    <button name="action_accept"
-                                            type="object"
-                                            icon="fa-check"
-                                            class="btn-primary"
-                                            groups="estate.group_estate_manager"/>
-<!--                                            invisible="status in ('accepted','refused')"/>-->
-
-                                    <button name="action_refuse"
-                                            type="object"
-                                            icon="fa-times"
-                                            class="btn-secondary"
-                                            groups="estate.group_estate_manager"/>
-<!--                                            invisible="status in ('accepted','refused')"/>-->
-
+                                    <button
+                                        name="action_accept"
+                                        type="object"
+                                        icon="fa-check"
+                                        class="btn-primary"
+                                        groups="estate.group_estate_manager,estate.group_estate_seller"
+                                        invisible="status == 'accepted' or property_state == 'sold'"
+                                    />
+                                    <button
+                                        name="action_refuse"
+                                        type="object"
+                                        icon="fa-times"
+                                        class="btn-secondary"
+                                        groups="estate.group_estate_manager,estate.group_estate_seller"
+                                        invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
+                                    />
                                     <field name="status" invisible="1"/>
+                                    <button
+                                        name="action_delete_offer"
+                                        type="object"
+                                        icon="fa-trash"
+                                        class="btn-link text-danger"
+                                    />
+
 
                                 </list>
-
                             </field>
 
                         </page>
@@ -223,9 +279,7 @@
         </field>
     </record>
 
-    <!-- ============================= -->
     <!-- Improved Estate Property Kanban View -->
-    <!-- ============================= -->
     <record id="estate_property_kanban_view" model="ir.ui.view">
         <field name="name">estate.property.kanban</field>
         <field name="model">estate.property</field>
@@ -284,9 +338,7 @@
         </field>
     </record>
 
-    <!-- ============================= -->
     <!-- Action -->
-    <!-- ============================= -->
     <record id="action_estate_property" model="ir.actions.act_window">
         <field name="name">Properties</field>
         <field name="res_model">estate.property</field>

@@ -1,49 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- ========================= -->
     <!-- Offer List (List) View -->
-    <!-- ========================= -->
+
     <record id="estate_property_offer_list_view" model="ir.ui.view">
-    <field name="name">estate.property.offer.list</field>
-    <field name="model">estate.property.offer</field>
-    <field name="arch" type="xml">
-        <list editable="bottom"
-              decoration-success="status == 'accepted'"
-              decoration-danger="status == 'refused' or property_state == 'cancelled'">
+        <field name="name">estate.property.offer.list</field>
+        <field name="model">estate.property.offer</field>
+        <field name="arch" type="xml">
+            <list
+                create="false"
+                delete="false"
+                edit="false"
+                decoration-success="status == 'accepted'"
+                decoration-danger="status == 'refused' or property_state == 'cancelled'"
+            >
+                <field name="property_state" invisible="1"/>
+                <field name="property_type_id"/>
+                <field name="price"/>
+                <field name="partner_id"/>
+                <field name="validity"/>
+                <field name="date_deadline"/>
 
-            <!-- REQUIRED FIELDS FOR DECORATION -->
-            <field name="status" invisible="1"/>
-            <field name="property_type_id"/>
-<!--            <field name="property_state" invisible="1"/>-->
 
-            <field name="price"/>
-            <field name="partner_id"/>
-            <field name="validity"/>
-            <field name="date_deadline"/>
+                <button
+                    name="action_delete_offer"
+                    type="object"
+                    icon="fa-trash"
+                    class="btn-link text-danger"
+                    groups="estate.group_estate_manager,!estate.group_estate_seller"
+                />
 
-            <button name="action_accept"
+                <button
+                    name="action_accept"
                     type="object"
                     icon="fa-check"
                     class="btn-primary"
-                    groups="estate.group_estate_manager"
-                    invisible="status in ('accepted','refused')"/>
-
-            <button name="action_refuse"
+                    groups="estate.group_estate_manager,estate.group_estate_seller"
+                    invisible="status == 'accepted' or property_state == 'sold'"
+                />
+                <button
+                    name="action_refuse"
                     type="object"
                     icon="fa-times"
                     class="btn-secondary"
-                    groups="estate.group_estate_manager"
-                    invisible="status in ('accepted','refused')"/>
+                    groups="estate.group_estate_manager,estate.group_estate_seller"
+                    invisible="status == 'refused' or property_state == 'sold'"
+                />
 
-        </list>
-    </field>
-</record>
+                <button
+                    name="action_delete_offer"
+                    type="object"
+                    icon="fa-trash"
+                    class="btn-link text-danger"
+                    groups="estate.group_estate_user,!estate.group_estate_manager,!estate.group_estate_seller"
+                    invisible="status == 'accepted'"
+                />
+
+                <field name="status" invisible="1"/>
+            </list>
+        </field>
+    </record>
 
 
-    <!-- ========================= -->
+
     <!-- Offer Form View -->
-    <!-- ========================= -->
     <record id="estate_property_offer_form_view" model="ir.ui.view">
         <field name="name">estate.property.offer.form</field>
         <field name="model">estate.property.offer</field>
@@ -73,9 +93,7 @@
         </field>
     </record>
 
-    <!-- ========================= -->
     <!-- Action -->
-    <!-- ========================= -->
     <record id="action_estate_property_offer" model="ir.actions.act_window">
         <field name="name">Offers</field>
         <field name="res_model">estate.property.offer</field>
