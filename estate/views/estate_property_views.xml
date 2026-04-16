@@ -53,7 +53,7 @@
                             string="Cancel"
                             class="btn-secondary"
                             groups="estate.group_estate_manager,estate.group_estate_seller"
-                            invisible="state in ('sold','cancelled')"/>
+                            invisible="state in ('sold','cancelled','offer_accepted')"/>
 
                 </header>
 
@@ -117,7 +117,7 @@
                         </page>
 
                         <!-- OFFERS -->
-                        <page string="Offers">
+                        <page string="Offers" name="offers">
 
                             <field name="offer_ids" groups="estate.group_estate_seller">
                                 <list
