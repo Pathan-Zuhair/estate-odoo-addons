@@ -25,4 +25,10 @@
         <field name="category_id" ref="estate.module_category_estate"/>
     </record>
 
+ <!--  Estate Accountant -->
+    <record id="group_estate_accountant" model="res.groups">
+        <field name="name">Estate Accountant</field>
+        <field name="category_id" ref="estate.module_category_estate"/>
+    </record>
+
 </odoo>
