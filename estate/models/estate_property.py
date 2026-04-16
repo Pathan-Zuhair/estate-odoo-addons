@@ -66,65 +66,68 @@ class EstateProperty(models.Model):
             )
 
     def write(self, vals):
-        """
-        Enforces strict backend security:
-
-        Estate User:
-        -  Cannot edit property fields
-        -  Allowed to update via offers (indirect system updates)
-
-        Estate Manager:
-        -  Full access
-
-        NOTE:
-        Backend validation is mandatory since UI restrictions
-        can be bypassed (RPC/import/debug mode).
-        """
         if vals and not self.env.su:
             user = self.env.user
 
-            if self._is_estate_seller():
-                allowed_seller_vals = {'state'}
-                if set(vals) - allowed_seller_vals:
-                    raise AccessError(
-                        _("Estate Sellers can only change the property state to sold or cancelled.")
-                    )
+            for record in self:
 
-                allowed_states = {'sold', 'cancelled'}
-                if vals.get('state') not in allowed_states:
-                    raise AccessError(
-                        _("Estate Sellers can only change the property state to sold or cancelled.")
-                    )
+                if self._is_estate_seller():
 
-            # Apply restriction only to Estate Users (not managers)
-            if (
-                user.has_group('estate.group_estate_user')
-                and not user.has_group('estate.group_estate_seller')
-                and not user.has_group('estate.group_estate_manager')
-            ):
-                keys = set(vals)
+                    # BEFORE acceptance → seller cannot edit property fields
+                    if record.state == 'offer_received':
+                        if set(vals.keys()) != {'state'}:
+                            raise AccessError(
+                                _("Seller cannot modify property once an offer is received.")
+                            )
 
-                # Only allow updates coming from offer logic
-                allowed = {'offer_ids'}
-
-                # Identify disallowed fields
-                extra = keys - allowed
-
-                # Allow system-driven state update (offer creation flow)
-                if 'state' in vals and vals['state'] == 'offer_received':
-                    extra.discard('state')
-
-                    # Ensure valid state transition
-                    if any(rec.state not in ('new', 'offer_received') for rec in self):
+                    #  AFTER sold/cancelled → no changes at all
+                    if record.state in ('sold', 'cancelled'):
                         raise AccessError(
-                            _("Only Estate Managers can change the property state.")
+                            _("Seller cannot modify property once it is sold or cancelled.")
                         )
 
-                # Block any unauthorized modification
-                if extra:
-                    raise AccessError(
-                        _("Only Estate Managers can modify property fields.")
-                    )
+                    #  BEFORE acceptance → cannot mark as sold
+                    if record.state in ('new', 'offer_received'):
+                        if vals.get('state') == 'sold':
+                            raise AccessError(
+                                _("Seller can only mark property as Sold after an offer is accepted.")
+                            )
+
+                    #  AFTER acceptance → restrict everything except valid state change
+                    if record.state == 'offer_accepted':
+
+                        if set(vals.keys()) != {'state'}:
+                            raise AccessError(
+                                _("Seller cannot modify property after offer is accepted.")
+                            )
+
+                        if vals.get('state') not in ('sold', 'cancelled'):
+                            raise AccessError(
+                                _("Seller can only mark property as Sold.")
+                            )
+
+                # 🔒 ESTATE USER restriction (keep same)
+                if (
+                        user.has_group('estate.group_estate_user')
+                        and not user.has_group('estate.group_estate_seller')
+                        and not user.has_group('estate.group_estate_manager')
+                ):
+                    keys = set(vals)
+                    allowed = {'offer_ids'}
+                    extra = keys - allowed
+
+                    if 'state' in vals and vals['state'] == 'offer_received':
+                        extra.discard('state')
+
+                        if any(rec.state not in ('new', 'offer_received') for rec in self):
+                            raise AccessError(
+                                _("Only Estate Managers can change the property state.")
+                            )
+
+                    if extra:
+                        raise AccessError(
+                            _("Only Estate Managers can modify property fields.")
+                        )
 
         return super().write(vals)
 
