@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- Top-level menu -->
     <menuitem
         id="menu_estate_root"
         name="Real Estate"
         sequence="10"
     />
 
-    <!-- Second-level menu -->
     <menuitem
         id="menu_estate_properties"
         name="Real estate"
@@ -16,7 +14,6 @@
         sequence="10"
     />
 
-    <!-- Third-level menu (linked to Properties action) -->
     <menuitem
         id="menu_estate_properties_action"
         name="Properties"
@@ -25,15 +22,14 @@
         sequence="10"
     />
 
-    <!-- Second-level menu: Configuration -->
     <menuitem
         id="menu_estate_configuration"
         name="Configuration"
         parent="menu_estate_root"
+        groups="estate.group_estate_admin"/>
         sequence="20"
     />
 
-    <!-- Third-level menu: Property Types -->
     <menuitem
         id="menu_estate_property_type"
         name="Property Types"
@@ -43,11 +39,27 @@
     />
 
     <menuitem
-    id="menu_estate_property_tag"
-    name="Property Tags"
-    parent="menu_estate_configuration"
-    action="estate_property_tag_action"
-    sequence="20"
+        id="menu_estate_property_tag"
+        name="Property Tags"
+        parent="menu_estate_configuration"
+        action="estate_property_tag_action"
+        sequence="20"
+    />
+
+    <menuitem
+        id="menu_estate_invoice_root"
+        name="Invoice"
+        parent="menu_estate_root"
+        sequence="30"
+        groups="estate.group_estate_admin"/>
+    />
+
+    <menuitem
+        id="menu_estate_invoices"
+        name="Invoices"
+        parent="menu_estate_invoice_root"
+        action="action_estate_property_sold_invoices"
+        sequence="10"
     />
 
 </odoo>

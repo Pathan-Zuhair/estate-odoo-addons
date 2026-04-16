@@ -76,20 +76,24 @@ class EstatePropertyOffer(models.Model):
 
     @api.model
     def create(self, vals):
-        # 1️⃣ Get property record (vals has only ID)
         property_id = vals.get('property_id')
+
         if property_id:
             property_rec = self.env['estate.property'].browse(property_id)
 
-            # 2️⃣ Check for higher existing offers
+            if property_rec.state in ['sold', 'cancelled']:
+                raise UserError(
+                    "You cannot create offers on a sold or cancelled property."
+                )
+
             existing_offers = property_rec.offer_ids.mapped('price')
             if existing_offers and vals.get('price') < max(existing_offers):
                 raise UserError(
                     "You cannot create an offer lower than an existing offer."
                 )
 
-            # 3️⃣ Update property state
-            property_rec.state = 'offer_received'
+            if property_rec.state in ['new']:
+                property_rec.state = 'offer_received'
 
         return super().create(vals)
 
@@ -110,3 +114,17 @@ class EstatePropertyOffer(models.Model):
 
     def action_refuse(self):
         self.write({'status': 'refused'})
+
+    def unlink(self):
+        for record in self:
+            if self.env.user.has_group('estate.group_estate_buyer'):
+                if record.status == 'accepted':
+                    raise UserError("You cannot delete an accepted offer.")
+
+                if record.create_uid != self.env.user:
+                    raise UserError("You can only delete your own offers.")
+
+                if record.property_id.state == 'offer_accepted':
+                    raise UserError("You cannot delete offers after an offer is accepted.")
+
+        return super().unlink()

@@ -1,5 +1,6 @@
 from odoo import models, fields, api
 
+
 class EstatePropertyType(models.Model):
     _name = 'estate.property.type'
     _description = 'Estate Property Type'
@@ -14,14 +15,12 @@ class EstatePropertyType(models.Model):
         string="Properties"
     )
 
-    # ✅ One2many inverse
     offer_ids = fields.One2many(
         'estate.property.offer',
         'property_type_id',
         string='Offers'
     )
 
-    # ✅ Computed count
     offer_count = fields.Integer(
         compute='_compute_offer_count',
         string='Offers'
@@ -35,7 +34,6 @@ class EstatePropertyType(models.Model):
         ),
     ]
 
-    # 🔹 COMPUTE METHOD
     @api.depends('offer_ids')
     def _compute_offer_count(self):
         for record in self:

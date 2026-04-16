@@ -1,0 +1,29 @@
+<odoo>
+
+    <record id="estate_offer_rule_buyer_read" model="ir.rule">
+        <field name="name">Buyer Read All Offers</field>
+        <field name="model_id" ref="model_estate_property_offer"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_buyer'))]"/>
+
+        <field name="domain_force">[(1,'=',1)]</field>
+
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="estate_offer_rule_buyer_write_own" model="ir.rule">
+        <field name="name">Buyer Write Own Offers</field>
+        <field name="model_id" ref="model_estate_property_offer"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_buyer'))]"/>
+
+        <field name="domain_force">[('create_uid','=',user.id)]</field>
+
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

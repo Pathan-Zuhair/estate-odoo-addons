@@ -3,6 +3,7 @@ from dateutil.relativedelta import relativedelta
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare, float_is_zero
 
+
 class EstateProperty(models.Model):
     _name = 'estate.property'
     _description = 'Estate Property'
@@ -27,12 +28,17 @@ class EstateProperty(models.Model):
     description = fields.Text()
     postcode = fields.Char()
 
-    date_availability = fields.Date(copy=False,
-    default=lambda self: fields.Date.today() + relativedelta(months=3))
+    date_availability = fields.Date(
+        copy=False,
+        default=lambda self: fields.Date.today() + relativedelta(months=3)
+    )
 
     expected_price = fields.Float(require=True)
-    selling_price = fields.Float(copy=False,
-    readonly=True)
+
+    selling_price = fields.Float(
+        copy=False,
+        readonly=True
+    )
 
     bedrooms = fields.Integer(default=2)
     living_area = fields.Integer()
@@ -141,16 +147,15 @@ class EstateProperty(models.Model):
     @api.constrains('selling_price', 'expected_price')
     def _check_selling_price(self):
         for record in self:
-            # Ignore check if selling price is zero
             if float_is_zero(record.selling_price, precision_rounding=0.01):
                 continue
 
             min_price = record.expected_price * 0.9
 
             if float_compare(
-                    record.selling_price,
-                    min_price,
-                    precision_rounding=0.01
+                record.selling_price,
+                min_price,
+                precision_rounding=0.01
             ) < 0:
                 raise UserError(
                     "The selling price cannot be lower than 90% of the expected price."
@@ -163,3 +168,12 @@ class EstateProperty(models.Model):
                 raise UserError(
                     "You can only delete properties in New or Cancelled state."
                 )
+
+    def write(self, vals):
+        if self.env.user.has_group('estate.group_estate_buyer'):
+            allowed_fields = {'offer_ids', 'state'}
+
+            if any(field not in allowed_fields for field in vals):
+                raise UserError("You are not allowed to modify property details.")
+
+        return super().write(vals)

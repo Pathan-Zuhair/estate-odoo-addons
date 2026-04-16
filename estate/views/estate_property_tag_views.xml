@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- Tree View -->
     <record id="estate_property_tag_list_view" model="ir.ui.view">
         <field name="name">estate.property.tag.list</field>
         <field name="model">estate.property.tag</field>
@@ -12,7 +11,6 @@
         </field>
     </record>
 
-    <!-- Form View -->
     <record id="estate_property_tag_form_view" model="ir.ui.view">
         <field name="name">estate.property.tag.form</field>
         <field name="model">estate.property.tag</field>
@@ -27,7 +25,6 @@
         </field>
     </record>
 
-    <!-- Action -->
     <record id="estate_property_tag_action" model="ir.actions.act_window">
         <field name="name">Property Tags</field>
         <field name="res_model">estate.property.tag</field>
