@@ -51,4 +51,18 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
+    <record id="rule_estate_offer_manager_full" model="ir.rule">
+        <field name="name">Estate Offer Manager Full Access</field>
+        <field name="model_id" ref="model_estate_property_offer"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_manager'))]"/>
+
+        <field name="domain_force">[(1, '=', 1)]</field>
+
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+    </record>
+
+
 </odoo>
