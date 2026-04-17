@@ -2,11 +2,16 @@
 
     <record id="group_estate_admin" model="res.groups">
         <field name="name">Admin</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="category_id" ref="base.module_category_real_estate"/>
     </record>
 
     <record id="group_estate_buyer" model="res.groups">
         <field name="name">Buyer</field>
+        <field name="category_id" ref="base.module_category_real_estate"/>
+    </record>
+
+    <record id="group_estate_seller" model="res.groups">
+        <field name="name">Seller</field>
         <field name="category_id" ref="base.module_category_real_estate"/>
     </record>
 

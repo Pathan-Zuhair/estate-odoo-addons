@@ -2,6 +2,13 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_estate_property_admin,estate.property admin,model_estate_property,estate.group_estate_admin,1,1,1,1
 access_estate_property_type,estate.property.type,model_estate_property_type,base.group_user,1,1,1,1
 access_estate_property_tag,estate.property.tag,model_estate_property_tag,base.group_user,1,1,1,1
-access_estate_offer_user,estate.property.offer user,model_estate_property_offer,base.group_user,1,1,1,1
 access_estate_property_buyer,estate.property.buyer,model_estate_property,estate.group_estate_buyer,1,1,0,0
+access_estate_property_seller,estate.property seller,model_estate_property,estate.group_estate_seller,1,1,1,1
+access_estate_offer_seller,estate.offer.seller,model_estate_property_offer,estate.group_estate_seller,1,1,0,0
 access_estate_offer_buyer,estate.offer.buyer,model_estate_property_offer,estate.group_estate_buyer,1,1,1,1
+access_estate_offer_admin,estate.offer.admin,model_estate_property_offer,estate.group_estate_admin,1,1,1,1
+access_estate_offer_user,estate.property.offer user,model_estate_property_offer,base.group_user,1,0,0,0
+access_account_move_estate_seller,account.move seller,account.model_account_move,estate.group_estate_seller,1,0,0,0
+access_account_move_line_estate_seller,account.move.line seller,account.model_account_move_line,estate.group_estate_seller,1,0,0,0
+access_account_move_estate_buyer,account.move buyer,account.model_account_move,estate.group_estate_buyer,1,0,0,0
+access_account_move_line_estate_buyer,account.move.line buyer,account.model_account_move_line,estate.group_estate_buyer,1,0,0,0
