@@ -88,18 +88,35 @@
                     <group string="Property Details">
                         <group>
                             <field name="bedrooms"/>
-                            <field name="living_area"/>
                             <field name="facades"/>
                         </group>
                         <group>
                             <field name="garage"/>
                             <field name="garden"/>
-                            <field name="garden_area" invisible="not garden"/>
                             <field name="garden_orientation" invisible="not garden"/>
-                            <field name="total_area" readonly="1"/>
                         </group>
                     </group>
 
+                    <!-- Area -->
+                    <group string="Area">
+                        <label for="living_area" string="Living Area"/>
+                        <div class="o_row">
+                            <field name="living_area" class="oe_inline"/>
+                            <span class="me-2">sqm</span>
+
+                            <span invisible="not garden" class="mx-3">+</span>
+
+                            <span invisible="not garden" class="me-2">Garden Area:</span>
+                            <field name="garden_area" class="oe_inline" invisible="not garden"/>
+                            <span invisible="not garden">sqm</span>
+                        </div>
+
+                        <label for="total_area" string="Total Area"/>
+                        <div class="o_row">
+                            <field name="total_area" readonly="1"/>
+                            <span class="me-2">sqm</span>
+                        </div>
+                    </group>
                     <!-- Notebook -->
                     <notebook>
 
@@ -121,14 +138,13 @@
 
                             <field name="offer_ids" groups="estate.group_estate_seller">
                                 <list
-                                    create="false"
-                                    delete="false"
-                                    edit="false"
-                                    decoration-success="status == 'accepted'"
-                                    decoration-danger="status == 'refused' or property_state == 'cancelled'"
+                                        create="false"
+                                        delete="false"
+                                        edit="false"
+                                        decoration-success="status == 'accepted'"
+                                        decoration-danger="status == 'refused' or property_state == 'cancelled'"
                                 >
 
-                                    <field name="property_state" optional="hide"/>
                                     <field name="partner_id"/>
                                     <field name="price"/>
                                     <field name="validity"/>
@@ -136,28 +152,45 @@
                                     <field name="status"/>
 
                                     <button
-                                        name="action_accept"
-                                        type="object"
-                                        icon="fa-check"
-                                        class="btn-primary"
-                                        invisible="status == 'accepted' or property_state == 'sold'"
+                                            name="action_accept"
+                                            type="object"
+                                            icon="fa-check"
+                                            class="btn-primary"
+                                            invisible="status == 'accepted' or property_state == 'sold'"
                                     />
                                     <button
-                                        name="action_refuse"
-                                        type="object"
-                                        icon="fa-times"
-                                        class="btn-secondary"
-                                        invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
+                                            name="action_refuse"
+                                            type="object"
+                                            icon="fa-times"
+                                            class="btn-secondary"
+                                            invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
                                     />
                                 </list>
                             </field>
 
-                            <field name="offer_ids" groups="estate.group_estate_user,!estate.group_estate_manager,!estate.group_estate_seller">
+                            <field name="offer_ids" groups="estate.group_estate_accountant">
                                 <list
-                                    editable="bottom"
-                                    delete="false"
-                                    decoration-success="status == 'accepted'"
-                                    decoration-danger="status == 'refused' or property_state == 'cancelled'">
+                                        create="false"
+                                        delete="false"
+                                        edit="false"
+                                        decoration-success="status == 'accepted'"
+                                        decoration-danger="status == 'refused' or property_state == 'cancelled'"
+                                >
+                                    <field name="partner_id"/>
+                                    <field name="price"/>
+                                    <field name="validity"/>
+                                    <field name="date_deadline"/>
+                                    <field name="status"/>
+                                </list>
+                            </field>
+
+                            <field name="offer_ids"
+                                   groups="estate.group_estate_user,!estate.group_estate_manager,!estate.group_estate_seller">
+                                <list
+                                        editable="bottom"
+                                        delete="false"
+                                        decoration-success="status == 'accepted'"
+                                        decoration-danger="status == 'refused' or property_state == 'cancelled'">
 
                                     <field name="partner_id"/>
                                     <field name="price"/>
@@ -166,11 +199,11 @@
                                     <field name="status"/>
 
                                     <button
-                                        name="action_delete_offer"
-                                        type="object"
-                                        icon="fa-trash"
-                                        class="btn-link text-danger"
-                                        invisible="status == 'accepted'"
+                                            name="action_delete_offer"
+                                            type="object"
+                                            icon="fa-trash"
+                                            class="btn-link text-danger"
+                                            invisible="status == 'accepted'"
                                     />
 
                                 </list>
@@ -178,10 +211,10 @@
 
                             <field name="offer_ids" groups="estate.group_estate_manager,!estate.group_estate_seller">
                                 <list
-                                    editable="bottom"
-                                    delete="false"
-                                    decoration-success="status == 'accepted'"
-                                    decoration-danger="status == 'refused' or property_state == 'cancelled'"
+                                        editable="bottom"
+                                        delete="false"
+                                        decoration-success="status == 'accepted'"
+                                        decoration-danger="status == 'refused' or property_state == 'cancelled'"
                                 >
 
                                     <field name="partner_id"/>
@@ -191,27 +224,27 @@
                                     <field name="status"/>
 
                                     <button
-                                        name="action_accept"
-                                        type="object"
-                                        icon="fa-check"
-                                        class="btn-primary"
-                                        groups="estate.group_estate_manager,estate.group_estate_seller"
-                                        invisible="status == 'accepted' or property_state == 'sold'"
+                                            name="action_accept"
+                                            type="object"
+                                            icon="fa-check"
+                                            class="btn-primary"
+                                            groups="estate.group_estate_manager,estate.group_estate_seller"
+                                            invisible="status == 'accepted' or property_state == 'sold'"
                                     />
                                     <button
-                                        name="action_refuse"
-                                        type="object"
-                                        icon="fa-times"
-                                        class="btn-secondary"
-                                        groups="estate.group_estate_manager,estate.group_estate_seller"
-                                        invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
+                                            name="action_refuse"
+                                            type="object"
+                                            icon="fa-times"
+                                            class="btn-secondary"
+                                            groups="estate.group_estate_manager,estate.group_estate_seller"
+                                            invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
                                     />
 
                                     <button
-                                        name="action_delete_offer"
-                                        type="object"
-                                        icon="fa-trash"
-                                        class="btn-link text-danger"
+                                            name="action_delete_offer"
+                                            type="object"
+                                            icon="fa-trash"
+                                            class="btn-link text-danger"
                                     />
 
 
