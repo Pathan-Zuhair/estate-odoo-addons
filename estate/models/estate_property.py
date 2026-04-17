@@ -171,9 +171,16 @@ class EstateProperty(models.Model):
 
     def write(self, vals):
         if self.env.user.has_group('estate.group_estate_buyer'):
-            allowed_fields = {'offer_ids', 'state'}
-
-            if any(field not in allowed_fields for field in vals):
+            forbidden_fields = set(vals.keys()) - {'offer_ids'}
+            if forbidden_fields:
                 raise UserError("You are not allowed to modify property details.")
+
+        if self.env.user.has_group('estate.group_estate_seller'):
+            for record in self:
+                allowed_fields = {'state', 'buyer_id', 'selling_price'}
+                forbidden_fields = set(vals.keys()) - allowed_fields
+
+                if record.state != 'new' and forbidden_fields:
+                    raise UserError("You cannot edit property after offer is received.")
 
         return super().write(vals)

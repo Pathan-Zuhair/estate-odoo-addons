@@ -87,44 +87,81 @@ class EstatePropertyOffer(models.Model):
                 )
 
             existing_offers = property_rec.offer_ids.mapped('price')
+
             if existing_offers and vals.get('price') < max(existing_offers):
                 raise UserError(
                     "You cannot create an offer lower than an existing offer."
                 )
 
-            if property_rec.state in ['new']:
-                property_rec.state = 'offer_received'
-
         return super().create(vals)
 
     def action_accept(self):
-        for offer in self:
-            property_rec = offer.property_id
+        for record in self:
 
-            accepted_offers = property_rec.offer_ids.filtered(
-                lambda o: o.status == 'accepted'
-            )
-            if accepted_offers:
-                raise UserError("Only one offer can be accepted for a property.")
+            if record.property_id.state in ['sold', 'cancelled']:
+                raise UserError("You cannot accept offers on a sold or cancelled property.")
 
-            offer.status = 'accepted'
-            property_rec.buyer_id = offer.partner_id
-            property_rec.selling_price = offer.price
-            property_rec.state = 'offer_accepted'
+            property_rec = record.property_id
+
+            other_offers = property_rec.offer_ids.filtered(lambda o: o != record)
+            other_offers.write({'status': 'refused'})
+
+            record.status = 'accepted'
+
+            property_rec.write({
+                'state': 'offer_accepted',
+                'buyer_id': record.partner_id.id,
+                'selling_price': record.price,
+            })
 
     def action_refuse(self):
-        self.write({'status': 'refused'})
+        for record in self:
+
+            if record.property_id.state in ['sold', 'cancelled']:
+                raise UserError("You cannot refuse offers on a sold or cancelled property.")
+
+            record.status = 'refused'
+
+            property_rec = record.property_id
+
+            accepted_offers = property_rec.offer_ids.filtered(lambda o: o.status == 'accepted')
+
+            if not accepted_offers:
+                property_rec.write({
+                    'state': 'offer_received',
+                    'buyer_id': False,
+                    'selling_price': 0,
+                })
 
     def unlink(self):
         for record in self:
+
+            if record.status == 'accepted':
+                raise UserError("Accepted offers cannot be deleted.")
+
             if self.env.user.has_group('estate.group_estate_buyer'):
-                if record.status == 'accepted':
-                    raise UserError("You cannot delete an accepted offer.")
 
                 if record.create_uid != self.env.user:
                     raise UserError("You can only delete your own offers.")
 
-                if record.property_id.state == 'offer_accepted':
-                    raise UserError("You cannot delete offers after an offer is accepted.")
+                if record.property_id.state in ('sold', 'cancelled'):
+                    raise UserError("You cannot delete offers for sold or cancelled properties.")
 
         return super().unlink()
+
+    def write(self, vals):
+
+        if self.env.user.has_group('estate.group_estate_buyer'):
+            for record in self:
+                if record.create_uid != self.env.user:
+                    raise UserError("You can only edit your own offers.")
+
+        if self.env.user.has_group('estate.group_estate_seller'):
+            allowed_fields = {'status'}
+
+            forbidden_fields = set(vals.keys()) - allowed_fields
+
+            if forbidden_fields:
+                raise UserError("Seller can only accept or refuse offers.")
+
+        return super().write(vals)

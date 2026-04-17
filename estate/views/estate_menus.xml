@@ -26,7 +26,7 @@
         id="menu_estate_configuration"
         name="Configuration"
         parent="menu_estate_root"
-        groups="estate.group_estate_admin"/>
+        groups="estate.group_estate_admin,estate.group_estate_seller"/>
         sequence="20"
     />
 
@@ -35,6 +35,7 @@
         name="Property Types"
         parent="menu_estate_configuration"
         action="estate_property_type_action"
+        groups="estate.group_estate_admin,estate.group_estate_seller"/>
         sequence="10"
     />
 
@@ -43,6 +44,7 @@
         name="Property Tags"
         parent="menu_estate_configuration"
         action="estate_property_tag_action"
+        groups="estate.group_estate_admin,estate.group_estate_seller"/>
         sequence="20"
     />
 
@@ -52,7 +54,6 @@
         parent="menu_estate_root"
         sequence="30"
         groups="estate.group_estate_admin"/>
-    />
 
     <menuitem
         id="menu_estate_invoices"
@@ -60,6 +61,6 @@
         parent="menu_estate_invoice_root"
         action="action_estate_property_sold_invoices"
         sequence="10"
-    />
+        groups="estate.group_estate_admin"/>
 
 </odoo>
