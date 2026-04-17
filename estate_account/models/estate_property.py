@@ -30,11 +30,10 @@ class EstateProperty(models.Model):
             commission = selling_price * 0.06
             admin_fee = 100.0
 
-            # 1️⃣ Create the invoice and link to property
             invoice = self.env['account.move'].create({
                 'move_type': 'out_invoice',
                 'partner_id': record.buyer_id.id,
-                'property_id': record.id,  # <-- link to property
+                'property_id': record.id,
                 'invoice_line_ids': [
                     (0, 0, {
                         'name': 'Property Selling Price',
@@ -56,5 +55,4 @@ class EstateProperty(models.Model):
 
             print("Invoice created:", invoice.id)
 
-        # ✅ Call the original action_sold to change state etc.
         return super().action_sold()

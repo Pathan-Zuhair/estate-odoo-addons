@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Inherit estate.property form to add Invoice page -->
+
     <record id="estate_property_form_invoice_page" model="ir.ui.view">
         <field name="name">estate.property.form.invoice.page</field>
         <field name="model">estate.property</field>
@@ -15,4 +15,5 @@
             </xpath>
         </field>
     </record>
+
 </odoo>
