@@ -96,18 +96,36 @@
                     <group string="Property Details">
                         <group>
                             <field name="bedrooms"/>
-                            <field name="living_area"/>
                             <field name="facades"/>
                         </group>
                         <group>
                             <field name="garage"/>
                             <field name="garden"/>
-                            <field name="garden_area" invisible="not garden"/>
                             <field name="garden_orientation" invisible="not garden"/>
-                            <field name="total_area" readonly="1"/>
                         </group>
                     </group>
 
+                    <!-- Area -->
+                    <group string="Area">
+                        <label for="living_area" string="Living Area"/>
+                        <div class="o_row">
+                            <field name="living_area" class="oe_inline"/>
+                            <span class="me-2">sqm</span>
+
+                            <span invisible="not garden" class="mx-3">+</span>
+
+                            <span invisible="not garden" class="me-2">Garden Area:</span>
+                            <field name="garden_area" class="oe_inline" invisible="not garden"/>
+                            <span invisible="not garden">sqm</span>
+                        </div>
+
+                        <label for="total_area" string="Total Area"/>
+                        <div class="o_row">
+                            <field name="total_area" readonly="1"/>
+                            <span class="me-2">sqm</span>
+                        </div>
+                    </group>
+                    <!-- Notebook -->
                     <notebook>
 
                         <page string="Description">
@@ -131,6 +149,7 @@
                                       decoration-success="status == 'accepted'"
                                       decoration-danger="status == 'refused' or property_state == 'cancelled'">
 
+                                    <field name="property_state" optional="hide"/>
                                     <field name="partner_id"/>
                                     <field name="price"/>
                                     <field name="validity"/>
