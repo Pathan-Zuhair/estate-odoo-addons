@@ -244,6 +244,19 @@ class EstateProperty(models.Model):
         store=True
     )
 
+    color = fields.Integer(compute="_compute_color")
+
+    @api.depends('state')
+    def _compute_color(self):
+        for rec in self:
+
+            if rec.state == 'sold':
+                rec.color = 10
+            elif rec.state == 'cancelled':
+                rec.color = 2
+            else:
+                rec.color = 9
+
     @api.depends('living_area', 'garden_area')
     def _compute_total_area(self):
         """
