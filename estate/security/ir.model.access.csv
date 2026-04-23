@@ -12,3 +12,7 @@ access_account_move_estate_seller,account.move seller,account.model_account_move
 access_account_move_line_estate_seller,account.move.line seller,account.model_account_move_line,estate.group_estate_seller,1,0,0,0
 access_account_move_estate_buyer,account.move buyer,account.model_account_move,estate.group_estate_buyer,1,0,0,0
 access_account_move_line_estate_buyer,account.move.line buyer,account.model_account_move_line,estate.group_estate_buyer,1,0,0,0
+access_estate_property_accountant,estate.property accountant,model_estate_property,estate.group_estate_accountant,1,0,0,0
+access_estate_offer_accountant,estate.offer accountant,model_estate_property_offer,estate.group_estate_accountant,1,0,0,0
+access_account_move_seller,account.move seller,account.model_account_move,estate.group_estate_seller,1,0,1,0
+access_account_move_line_seller,account.move.line seller,account.model_account_move_line,estate.group_estate_seller,1,0,1,0

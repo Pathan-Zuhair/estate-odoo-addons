@@ -64,11 +64,10 @@ class EstateProperty(models.Model):
             ('offer_received', 'Offer Received'),
             ('offer_accepted', 'Offer Accepted'),
             ('sold', 'Sold'),
-            ('cancelled', 'Cancelled'),
+            ('cancelled', 'Cancelled')
         ],
-        required=True,
-        copy=False,
-        default='new'
+        compute="_compute_state",
+        store=True
     )
 
     property_type_id = fields.Many2one(
@@ -110,6 +109,19 @@ class EstateProperty(models.Model):
         compute='_compute_best_price',
         store=True
     )
+
+    @api.depends('offer_ids', 'offer_ids.status')
+    def _compute_state(self):
+        for record in self:
+            if record.state in ('sold', 'cancelled'):
+                continue
+
+            if not record.offer_ids:
+                record.state = 'new'
+            elif any(o.status == 'accepted' for o in record.offer_ids):
+                record.state = 'offer_accepted'
+            else:
+                record.state = 'offer_received'
 
     @api.depends('living_area', 'garden_area')
     def _compute_total_area(self):

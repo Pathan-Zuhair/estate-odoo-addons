@@ -30,7 +30,9 @@ class EstateProperty(models.Model):
             commission = selling_price * 0.06
             admin_fee = 100.0
 
-            invoice = self.env['account.move'].create({
+            invoice = self.env['account.move'].sudo().with_context(
+                from_property_sale=True
+            ).create({
                 'move_type': 'out_invoice',
                 'partner_id': record.buyer_id.id,
                 'property_id': record.id,

@@ -8,7 +8,10 @@
         'account',
     ],
     'sequence': 2,
-    'data': ['views/estate_property_invoice_page.xml',],
+    'data': [
+            'security/ir.model.access.csv',
+            'views/estate_property_invoice_page.xml',
+            'views/account_move_view.xml'],
     'installable': True,
     'application': True,
 }

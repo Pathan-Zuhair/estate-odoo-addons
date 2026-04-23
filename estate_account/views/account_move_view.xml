@@ -1,0 +1,31 @@
+<odoo>
+
+    <record id="view_move_form_estate_buttons_force" model="ir.ui.view">
+        <field name="name">account.move.form.estate.buttons.force</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority" eval="10000"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//button[@name='button_cancel']" position="replace">
+                <button name="button_cancel"
+                        string="Cancel"
+                        type="object"
+                        groups="estate.group_estate_admin"/>
+            </xpath>
+
+            <xpath expr="//button[@name='button_draft']" position="replace">
+                <button name="button_draft"
+                        string="Reset to Draft"
+                        type="object"
+                        groups="estate.group_estate_admin"/>
+            </xpath>
+
+            <xpath expr="//button[@name='action_invoice_sent']" position="attributes">
+                <attribute name="groups">estate.group_estate_admin,estate.group_estate_accountant</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

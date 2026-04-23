@@ -63,6 +63,19 @@ class EstatePropertyOffer(models.Model):
         store=True
     )
 
+    def action_delete_offer(self):
+        for record in self:
+            if record.status in ('accepted', 'refused'):
+                raise UserError("You cannot delete accepted or refused offers.")
+
+            if record.property_id.state != 'offer_received':
+                raise UserError("You can delete offers only in Offer Received stage.")
+
+            if record.create_uid.id != self.env.user.id:
+                raise UserError("You can only delete your own offers.")
+
+        return self.unlink()
+
     @api.depends('create_date', 'validity')
     def _compute_date_deadline(self):
         for record in self:
@@ -86,9 +99,17 @@ class EstatePropertyOffer(models.Model):
                     "You cannot create offers on a sold or cancelled property."
                 )
 
+            price = vals.get('price', 0)
+
+            min_price = property_rec.expected_price * 0.9
+            if price < min_price:
+                raise UserError(
+                    f"Offer must be at least 90% of expected price ({min_price})."
+                )
+
             existing_offers = property_rec.offer_ids.mapped('price')
 
-            if existing_offers and vals.get('price') < max(existing_offers):
+            if existing_offers and price < max(existing_offers):
                 raise UserError(
                     "You cannot create an offer lower than an existing offer."
                 )
@@ -97,7 +118,6 @@ class EstatePropertyOffer(models.Model):
 
     def action_accept(self):
         for record in self:
-
             if record.property_id.state in ['sold', 'cancelled']:
                 raise UserError("You cannot accept offers on a sold or cancelled property.")
 
@@ -116,7 +136,6 @@ class EstatePropertyOffer(models.Model):
 
     def action_refuse(self):
         for record in self:
-
             if record.property_id.state in ['sold', 'cancelled']:
                 raise UserError("You cannot refuse offers on a sold or cancelled property.")
 
@@ -134,31 +153,34 @@ class EstatePropertyOffer(models.Model):
                 })
 
     def unlink(self):
-        for record in self:
+        properties = self.mapped('property_id')
 
+        for record in self:
             if record.status == 'accepted':
-                raise UserError("Accepted offers cannot be deleted.")
+                raise UserError("Accepted or Refused offers cannot be deleted.")
 
             if self.env.user.has_group('estate.group_estate_buyer'):
-
-                if record.create_uid != self.env.user:
+                if record.create_uid.id != self.env.user.id:
                     raise UserError("You can only delete your own offers.")
 
                 if record.property_id.state in ('sold', 'cancelled'):
                     raise UserError("You cannot delete offers for sold or cancelled properties.")
 
-        return super().unlink()
+        res = super().unlink()
+
+        return res
 
     def write(self, vals):
-
         if self.env.user.has_group('estate.group_estate_buyer'):
             for record in self:
-                if record.create_uid != self.env.user:
+                if record.status in ('accepted', 'refused'):
+                    raise UserError("You cannot modify an accepted or refused offer.")
+
+                if record.create_uid.id != self.env.user.id:
                     raise UserError("You can only edit your own offers.")
 
         if self.env.user.has_group('estate.group_estate_seller'):
             allowed_fields = {'status'}
-
             forbidden_fields = set(vals.keys()) - allowed_fields
 
             if forbidden_fields:
