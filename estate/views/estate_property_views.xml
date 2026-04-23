@@ -31,13 +31,14 @@
         <field name="arch" type="xml">
             <form string="Property" edit="true">
 
-                <!--  HEADER: STATUSBAR + ACTION BUTTONS -->
+                <!--  HEADER: Statusbar + ACTION BUTTONS -->
                 <header>
 
                     <!-- STATUS BAR -->
                     <field name="state"
                            widget="statusbar"
-                           statusbar_visible="new,offer_received,offer_accepted,sold,cancelled"/>
+                           statusbar_visible="new,offer_received,offer_accepted,sold,cancelled"
+                    />
 
                     <!-- SOLD BUTTON -->
                     <button name="action_sold"
@@ -45,7 +46,7 @@
                             string="Sold"
                             class="btn-primary"
                             groups="estate.group_estate_manager,estate.group_estate_seller"
-                            invisible="state in ('sold','cancelled')"/>
+                            invisible="state in ('new','offer_received','sold','cancelled')"/>
 
                     <!-- CANCEL BUTTON -->
                     <button name="action_cancel"
@@ -69,7 +70,11 @@
                     <!-- General -->
                     <group>
                         <group>
-                            <field name="state"/>
+                            <field name="state" groups="estate.group_estate_manager"/>
+                            <field name="state" readonly="1"
+                                   groups="estate.group_estate_user,!estate.group_estate_manager"/>
+                            <field name="state" readonly="1" groups="estate.group_estate_seller"/>
+
                             <field name="postcode"/>
                             <field name="date_availability"/>
                             <field name="property_type_id"
@@ -100,21 +105,24 @@
                     <!-- Area -->
                     <group string="Area">
                         <label for="living_area" string="Living Area"/>
-                        <div class="o_row">
-                            <field name="living_area" class="oe_inline"/>
-                            <span class="me-2">sqm</span>
+                        <div style="display: flex; align-items: center;">
+                            <field name="living_area" class="oe_inline"
+                                   style="width: auto !important; min-width: 50px;"/>
+                            <span style="margin-left: 5px; margin-right: 15px;">sqm</span>
 
-                            <span invisible="not garden" class="mx-3">+</span>
+                            <span invisible="not garden" style="margin-right: 15px;">+</span>
 
-                            <span invisible="not garden" class="me-2">Garden Area:</span>
-                            <field name="garden_area" class="oe_inline" invisible="not garden"/>
-                            <span invisible="not garden">sqm</span>
+                            <span invisible="not garden" style="margin-right: 5px;">Garden Area:</span>
+                            <field name="garden_area" class="oe_inline" invisible="not garden"
+                                   style="width: auto !important; min-width: 50px;"/>
+                            <span invisible="not garden" style="margin-left: 5px;">sqm</span>
                         </div>
 
                         <label for="total_area" string="Total Area"/>
-                        <div class="o_row">
-                            <field name="total_area" readonly="1"/>
-                            <span class="me-2">sqm</span>
+                        <div style="display: flex; align-items: center;">
+                            <field name="total_area" readonly="1" class="oe_inline"
+                                   style="width: auto !important; min-width: 50px;"/>
+                            <span style="margin-left: 5px;">sqm</span>
                         </div>
                     </group>
                     <!-- Notebook -->
@@ -146,9 +154,9 @@
                                 >
 
                                     <field name="partner_id"/>
-                                    <field name="price"/>
-                                    <field name="validity"/>
-                                    <field name="date_deadline"/>
+                                    <field name="price" width="100"/>
+                                    <field name="validity" width="100"/>
+                                    <field name="date_deadline" width="100"/>
                                     <field name="status"/>
 
                                     <button
@@ -177,9 +185,9 @@
                                         decoration-danger="status == 'refused' or property_state == 'cancelled'"
                                 >
                                     <field name="partner_id"/>
-                                    <field name="price"/>
-                                    <field name="validity"/>
-                                    <field name="date_deadline"/>
+                                    <field name="price" width="100"/>
+                                    <field name="validity" width="100"/>
+                                    <field name="date_deadline" width="100"/>
                                     <field name="status"/>
                                 </list>
                             </field>
@@ -203,8 +211,7 @@
                                             type="object"
                                             icon="fa-trash"
                                             class="btn-link text-danger"
-                                            invisible="status == 'accepted'"
-                                    />
+                                            invisible="create_uid != uid or property_state != 'offer_received' or status in ('accepted', 'refused')"/>
 
                                 </list>
                             </field>
@@ -212,15 +219,15 @@
                             <field name="offer_ids" groups="estate.group_estate_manager,!estate.group_estate_seller">
                                 <list
                                         editable="bottom"
-                                        delete="false"
+                                        delete="true"
                                         decoration-success="status == 'accepted'"
                                         decoration-danger="status == 'refused' or property_state == 'cancelled'"
                                 >
 
                                     <field name="partner_id"/>
-                                    <field name="price"/>
-                                    <field name="validity"/>
-                                    <field name="date_deadline"/>
+                                    <field name="price" width="100"/>
+                                    <field name="validity" width="100"/>
+                                    <field name="date_deadline" width="100"/>
                                     <field name="status"/>
 
                                     <button
@@ -231,6 +238,7 @@
                                             groups="estate.group_estate_manager,estate.group_estate_seller"
                                             invisible="status == 'accepted' or property_state == 'sold'"
                                     />
+
                                     <button
                                             name="action_refuse"
                                             type="object"
@@ -239,29 +247,16 @@
                                             groups="estate.group_estate_manager,estate.group_estate_seller"
                                             invisible="status == 'refused' or property_state in ('sold', 'cancelled')"
                                     />
-
-                                    <button
-                                            name="action_delete_offer"
-                                            type="object"
-                                            icon="fa-trash"
-                                            class="btn-link text-danger"
-                                    />
-
-
                                 </list>
                             </field>
-
                         </page>
                     </notebook>
-
                 </sheet>
             </form>
         </field>
     </record>
 
-
     <!-- Search View -->
-
     <record id="estate_property_search_view" model="ir.ui.view">
         <field name="name">estate.property.search</field>
         <field name="model">estate.property</field>
@@ -394,22 +389,4 @@
         <field name="domain">[('move_type','=','out_invoice'),('property_sold','=',True)]</field>
         <field name="context">{'default_move_type':'out_invoice'}</field>
     </record>
-
-    <!--    &lt;!&ndash; Top-level menu &ndash;&gt;-->
-    <!--    <menuitem-->
-    <!--        id="menu_estate_invoice_root"-->
-    <!--        name="Invoice"-->
-    <!--        parent="menu_estate_root"-->
-    <!--        sequence="30"-->
-    <!--    />-->
-
-    <!--    &lt;!&ndash; Submenu: Sold Property Invoices &ndash;&gt;-->
-    <!--    <menuitem-->
-    <!--        id="menu_estate_invoices"-->
-    <!--        name="Invoices"-->
-    <!--        parent="menu_estate_invoice_root"-->
-    <!--        action="action_estate_property_sold_invoices"-->
-    <!--        sequence="10"-->
-    <!--    />-->
-
 </odoo>

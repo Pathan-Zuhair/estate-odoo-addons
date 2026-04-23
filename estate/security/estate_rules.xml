@@ -1,16 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
-    <!--    <record id="rule_estate_offer_user" model="ir.rule">-->
-    <!--        <field name="name">Estate Offer User</field>-->
-    <!--        <field name="model_id" ref="model_estate_property_offer"/>-->
-    <!--        <field name="groups" eval="[(4, ref('estate.group_estate_user'))]"/>-->
-    <!--        <field name="domain_force">[('create_uid', '=', user.id)]</field>-->
-    <!--        <field name="perm_read" eval="1"/>-->
-    <!--        <field name="perm_write" eval="1"/>-->
-    <!--        <field name="perm_create" eval="1"/>-->
-    <!--        <field name="perm_unlink" eval="1"/>-->
-    <!--    </record>-->
-
+    <!-- Rule: Allow estate users to read all offers but no modification -->
     <record id="rule_estate_offer_user_read" model="ir.rule">
         <field name="name">Estate Offer User Read All</field>
         <field name="model_id" ref="model_estate_property_offer"/>
@@ -25,6 +15,7 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
+ <!-- Rule: Allow estate users to manage only their own offers -->
     <record id="rule_estate_offer_user_own" model="ir.rule">
         <field name="name">Estate Offer User Own</field>
         <field name="model_id" ref="model_estate_property_offer"/>
@@ -39,7 +30,57 @@
         <field name="perm_unlink" eval="1"/>
     </record>
 
+ <!-- Rule: Estate users can only read all invoices -->
+    <record id="rule_account_move_estate_user_readonly" model="ir.rule">
+        <field name="name">Account Move Readonly - Estate User</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_user'))]"/>
 
+        <!-- allow ALL invoices to be visible -->
+        <field name="domain_force">[(1, '=', 1)]</field>
+
+        <!-- ONLY READ -->
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+
+    </record>
+
+<!-- Rule: Estate sellers can only read all invoices -->
+    <record id="rule_account_move_estate_seller_readonly" model="ir.rule">
+        <field name="name">Account Move Readonly - Estate Seller</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_seller'))]"/>
+
+        <!-- allow ALL invoices to be visible -->
+        <field name="domain_force">[(1, '=', 1)]</field>
+
+        <!-- ONLY READ -->
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+
+    </record>
+
+<!-- Rule: Sellers can only read all invoice lines -->
+    <record id="rule_account_move_line_seller_readonly" model="ir.rule">
+        <field name="name">Account Move Line Seller Readonly</field>
+        <field name="model_id" ref="account.model_account_move_line"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_seller'))]"/>
+
+        <!-- Access to all records -->
+        <field name="domain_force">[(1, '=', 1)]</field>
+
+        <!-- Permissions -->
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+<!-- Rule: Sellers can only read all offers -->
     <record id="rule_estate_offer_seller" model="ir.rule">
         <field name="name">Estate Offer Seller</field>
         <field name="model_id" ref="model_estate_property_offer"/>
@@ -51,6 +92,7 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
+     <!-- Rule: Managers have full access to offers -->
     <record id="rule_estate_offer_manager_full" model="ir.rule">
         <field name="name">Estate Offer Manager Full Access</field>
         <field name="model_id" ref="model_estate_property_offer"/>
@@ -62,6 +104,31 @@
         <field name="perm_write" eval="1"/>
         <field name="perm_create" eval="1"/>
         <field name="perm_unlink" eval="1"/>
+    </record>
+
+<!-- Rule: Accountant can only read all properties -->
+
+    <record id="rule_estate_property_accountant_read_all" model="ir.rule">
+        <field name="name">Estate Property Accountant Read All</field>
+        <field name="model_id" ref="model_estate_property"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_accountant'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+<!-- Rule: Accountant can only read all offers -->
+    <record id="rule_estate_offer_accountant_read_all" model="ir.rule">
+        <field name="name">Estate Offer Accountant Read All</field>
+        <field name="model_id" ref="model_estate_property_offer"/>
+        <field name="groups" eval="[(4, ref('estate.group_estate_accountant'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
     </record>
 
 

@@ -8,7 +8,7 @@
         'account',
     ],
     'sequence': 2,
-    'data': ['views/estate_property_invoice_page.xml',],
+    'data': ['views/estate_property_invoice_page.xml'],
     'installable': True,
     'application': True,
 }

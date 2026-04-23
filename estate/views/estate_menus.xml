@@ -12,7 +12,7 @@
     <menuitem
         id="menu_estate_properties"
         name="Real estate"
-        groups="estate.group_estate_manager,estate.group_estate_seller,estate.group_estate_user"
+        groups="estate.group_estate_manager,estate.group_estate_seller,estate.group_estate_user,estate.group_estate_accountant"
         parent="menu_estate_root"
         sequence="10"
     />
@@ -59,7 +59,7 @@
     <menuitem
         id="menu_estate_invoice_root"
         name="Invoice"
-        groups="estate.group_estate_manager,estate.group_estate_seller"
+        groups="estate.group_estate_manager,estate.group_estate_accountant"
         parent="menu_estate_root"
         sequence="30"
     />
@@ -68,7 +68,7 @@
     <menuitem
         id="menu_estate_invoices"
         name="Invoices"
-        groups="estate.group_estate_manager,estate.group_estate_seller"
+        groups="estate.group_estate_manager,estate.group_estate_accountant"
         parent="menu_estate_invoice_root"
         action="action_estate_property_sold_invoices"
         sequence="10"

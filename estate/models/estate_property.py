@@ -17,10 +17,6 @@ class EstateProperty(models.Model):
         Dynamically modifies form view:
         - Estate Users → all fields readonly (except offers)
         - Estate Managers → full access
-
-        NOTE:
-        This is only UI-level restriction.
-        Backend security is handled in write().
         """
         arch, view = super()._get_view(view_id, view_type, **options)
 
@@ -73,7 +69,7 @@ class EstateProperty(models.Model):
 
                 if self._is_estate_seller():
 
-                    # BEFORE acceptance → seller cannot edit property fields
+                    # Once Offer received → seller cannot edit property fields
                     if record.state == 'offer_received':
                         if set(vals.keys()) != {'state'}:
                             raise AccessError(
@@ -86,7 +82,7 @@ class EstateProperty(models.Model):
                             _("Seller cannot modify property once it is sold or cancelled.")
                         )
 
-                    #  BEFORE acceptance → cannot mark as sold
+                     # BEFORE acceptance → cannot mark as sold
                     if record.state in ('new', 'offer_received'):
                         if vals.get('state') == 'sold':
                             raise AccessError(
@@ -106,7 +102,7 @@ class EstateProperty(models.Model):
                                 _("Seller can only mark property as Sold.")
                             )
 
-                # 🔒 ESTATE USER restriction (keep same)
+                #  ESTATE USER restriction
                 if (
                         user.has_group('estate.group_estate_user')
                         and not user.has_group('estate.group_estate_seller')
@@ -121,12 +117,12 @@ class EstateProperty(models.Model):
 
                         if any(rec.state not in ('new', 'offer_received') for rec in self):
                             raise AccessError(
-                                _("Only Estate Managers can change the property state.")
+                                _("Only Estate Seller can change the property state.")
                             )
 
                     if extra:
                         raise AccessError(
-                            _("Only Estate Managers can modify property fields.")
+                            _("Only Estate Seller can modify property fields.")
                         )
 
         return super().write(vals)
@@ -173,7 +169,7 @@ class EstateProperty(models.Model):
     selling_price = fields.Float(copy=False, readonly=True)
 
     bedrooms = fields.Integer(default=2)
-    living_area = fields.Integer()
+    living_area = fields.Integer(string='Living Area (sqm)')
     facades = fields.Integer()
 
     garage = fields.Boolean()
@@ -308,33 +304,7 @@ class EstateProperty(models.Model):
                 raise UserError("A cancelled property cannot be sold.")
             record.write({'state': 'sold'})
 
-
-    #  BUSINESS CONSTRAINTS
-
-    # @api.constrains('selling_price', 'expected_price')
-    # def _check_selling_price(self):
-    #     """
-    #     Ensures selling price is at least 90% of expected price
-    #     """
-    #     for record in self:
-    #         # Ignore check if selling price is zero
-    #         if float_is_zero(record.selling_price, precision_rounding=0.01):
-    #             continue
-    #
-    #         min_price = record.expected_price * 0.9
-    #
-    #         if float_compare(
-    #                 record.selling_price,
-    #                 min_price,
-    #                 precision_rounding=0.01
-    #         ) < 0:
-    #             raise UserError(
-    #                 "The selling price cannot be lower than 90% of the expected price."
-    #             )
-
-
     #  DELETE RESTRICTION
-
     @api.ondelete(at_uninstall=False)
     def _check_property_deletion(self):
         """

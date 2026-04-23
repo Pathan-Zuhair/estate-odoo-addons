@@ -1,5 +1,6 @@
 # estate_account/models/account_move.py
 from odoo import models, fields, api
+from odoo.exceptions import AccessError
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -22,3 +23,4 @@ class AccountMove(models.Model):
     def _compute_property_sold(self):
         for move in self:
             move.property_sold = bool(move.property_id and move.property_id.state == 'sold')
+

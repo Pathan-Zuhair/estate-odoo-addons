@@ -8,11 +8,11 @@
         <field name="model">estate.property.offer</field>
         <field name="arch" type="xml">
             <list
-                create="false"
-                delete="false"
-                edit="false"
-                decoration-success="status == 'accepted'"
-                decoration-danger="status == 'refused' or property_state == 'cancelled'"
+                    create="false"
+                    delete="false"
+                    edit="false"
+                    decoration-success="status == 'accepted'"
+                    decoration-danger="status == 'refused' or property_state == 'cancelled'"
             >
                 <field name="property_state" invisible="1"/>
                 <field name="property_type_id"/>
@@ -23,44 +23,43 @@
 
 
                 <button
-                    name="action_delete_offer"
-                    type="object"
-                    icon="fa-trash"
-                    class="btn-link text-danger"
-                    groups="estate.group_estate_manager,!estate.group_estate_seller"
+                        name="action_delete_offer"
+                        type="object"
+                        icon="fa-trash"
+                        class="btn-link text-danger"
+                        groups="estate.group_estate_manager,!estate.group_estate_seller"
                 />
 
                 <button
-                    name="action_accept"
-                    type="object"
-                    icon="fa-check"
-                    class="btn-primary"
-                    groups="estate.group_estate_manager,estate.group_estate_seller"
-                    invisible="status == 'accepted' or property_state == 'sold'"
+                        name="action_accept"
+                        type="object"
+                        icon="fa-check"
+                        class="btn-primary"
+                        groups="estate.group_estate_manager,estate.group_estate_seller"
+                        invisible="status == 'accepted' or property_state == 'sold'"
                 />
                 <button
-                    name="action_refuse"
-                    type="object"
-                    icon="fa-times"
-                    class="btn-secondary"
-                    groups="estate.group_estate_manager,estate.group_estate_seller"
-                    invisible="status == 'refused' or property_state == 'sold'"
-                />
-
-                <button
-                    name="action_delete_offer"
-                    type="object"
-                    icon="fa-trash"
-                    class="btn-link text-danger"
-                    groups="estate.group_estate_user,!estate.group_estate_manager,!estate.group_estate_seller"
-                    invisible="status == 'accepted'"
+                        name="action_refuse"
+                        type="object"
+                        icon="fa-times"
+                        class="btn-secondary"
+                        groups="estate.group_estate_manager,estate.group_estate_seller"
+                        invisible="status == 'refused' or property_state == 'sold'"
                 />
 
                 <field name="status" invisible="1"/>
+
+                <button
+                        name="action_delete_offer"
+                        type="object"
+                        icon="fa-trash"
+                        class="btn-link text-danger"
+                        groups="estate.group_estate_user"
+                        invisible="status in ('accepted', 'refused')"
+                />
             </list>
         </field>
     </record>
-
 
 
     <!-- Offer Form View -->
@@ -100,7 +99,7 @@
         <field name="view_mode">list,form</field>
 
         <field name="domain">
-        [('property_type_id', '=', active_id)]
+            [('property_type_id', '=', active_id)]
         </field>
 
     </record>

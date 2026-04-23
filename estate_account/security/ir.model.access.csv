@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_estate_property_user,estate.property user,model_estate_property,estate.group_estate_user,1,1,0,0
-access_estate_property_seller,estate.property seller,model_estate_property,estate.group_estate_seller,1,1,1,1
+access_estate_property_user,estate.property user,model_estate_property,estate.group_estate_user,1,0,0,0
+access_estate_property_seller,estate.property seller,model_estate_property,estate.group_estate_seller,1,1,1,0
 access_estate_property_manager,estate.property manager,model_estate_property,estate.group_estate_manager,1,1,1,1
 access_estate_property_accountant,estate.property accountant,model_estate_property,estate.group_estate_accountant,1,0,0,0
