@@ -110,6 +110,19 @@ class EstateProperty(models.Model):
         store=True
     )
 
+    color = fields.Integer(compute="_compute_color")
+
+    @api.depends('state')
+    def _compute_color(self):
+        for rec in self:
+
+            if rec.state == 'sold':
+                rec.color = 10
+            elif rec.state == 'cancelled':
+                rec.color = 2
+            else:
+                rec.color = 9
+
     @api.depends('offer_ids', 'offer_ids.status')
     def _compute_state(self):
         for record in self:
