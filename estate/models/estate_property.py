@@ -21,10 +21,10 @@ class EstateProperty(models.Model):
         arch, view = super()._get_view(view_id, view_type, **options)
 
         if (
-            view_type == 'form'
-            and self.env.user.has_group('estate.group_estate_user')
-            and not self.env.user.has_group('estate.group_estate_seller')
-            and not self.env.user.has_group('estate.group_estate_manager')
+                view_type == 'form'
+                and self.env.user.has_group('estate.group_estate_user')
+                and not self.env.user.has_group('estate.group_estate_seller')
+                and not self.env.user.has_group('estate.group_estate_manager')
         ):
             for node in arch.xpath("//field[@name]"):
 
@@ -54,8 +54,8 @@ class EstateProperty(models.Model):
             return
 
         if not (
-            self.env.user.has_group('estate.group_estate_manager')
-            or self.env.user.has_group('estate.group_estate_seller')
+                self.env.user.has_group('estate.group_estate_manager')
+                or self.env.user.has_group('estate.group_estate_seller')
         ):
             raise AccessError(
                 _("Only Estate Managers and Estate Sellers can change property status.")
@@ -82,7 +82,7 @@ class EstateProperty(models.Model):
                             _("Seller cannot modify property once it is sold or cancelled.")
                         )
 
-                     # BEFORE acceptance → cannot mark as sold
+                    # BEFORE acceptance → cannot mark as sold
                     if record.state in ('new', 'offer_received'):
                         if vals.get('state') == 'sold':
                             raise AccessError(

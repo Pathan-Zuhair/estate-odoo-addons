@@ -68,6 +68,7 @@
                             title="Cancelled"
                             bg_color="bg-dark"
                             invisible="state != 'cancelled'"/>
+
                     <!-- Title -->
                     <div class="oe_title">
                         <h1>
