@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class AccountMove(models.Model):
@@ -51,6 +51,53 @@ class AccountMove(models.Model):
         if self._is_estate_readonly_user():
             raise AccessError("Buyer/Seller users cannot delete invoices.")
         return super().unlink()
+
+    # ✅ ADDED: INVOICE CONFIRM NOTIFICATION (SAFE)
+    def action_post(self):
+        res = super().action_post()
+
+        for record in self:
+            try:
+                # Only customer invoices
+                if record.move_type != 'out_invoice':
+                    continue
+
+                # Must be linked to property
+                if not record.property_id:
+                    continue
+
+                property_rec = record.property_id
+
+                # Only if property is sold
+                if property_rec.state != 'sold':
+                    continue
+
+                # Seller (salesperson)
+                if not property_rec.salesperson_id:
+                    continue
+
+                partner_id = property_rec.salesperson_id.partner_id.id
+
+                # ✅ NOTIFICATION
+                property_rec.message_post(
+                    body=f"""Invoice Confirmed
+
+Property: {property_rec.name}
+Invoice: {record.name}
+Amount: {record.amount_total}
+
+Invoice has been confirmed by accountant.
+""",
+                    partner_ids=[partner_id],
+                    message_type="notification",
+                    subtype_xmlid="mail.mt_comment"
+                )
+
+            except Exception:
+                # Never break invoice posting
+                continue
+
+        return res
 
 
 class AccountMoveLine(models.Model):

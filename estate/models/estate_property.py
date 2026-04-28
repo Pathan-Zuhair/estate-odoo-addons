@@ -8,6 +8,7 @@ class EstateProperty(models.Model):
     _name = 'estate.property'
     _description = 'Estate Property'
     _order = 'id desc'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     _sql_constraints = [
         (
@@ -167,7 +168,28 @@ class EstateProperty(models.Model):
         for record in self:
             if record.state == 'cancelled':
                 raise UserError("A cancelled property cannot be sold.")
+
             record.state = 'sold'
+
+            # ✅ FIND ACCOUNTANT USERS
+            accountant_group = self.env.ref('estate.group_estate_accountant')
+            accountant_users = accountant_group.users
+
+            partners = accountant_users.mapped('partner_id').ids
+
+            # ✅ SEND NOTIFICATION
+            record.message_post(
+                body=f"""Property Sold
+
+    Property: {record.name}
+    Selling Price: {record.selling_price}
+
+    Please review and create invoice.
+    """,
+                partner_ids=partners,
+                message_type="notification",
+                subtype_xmlid="mail.mt_comment"
+            )
 
     @api.constrains('selling_price', 'expected_price')
     def _check_selling_price(self):
