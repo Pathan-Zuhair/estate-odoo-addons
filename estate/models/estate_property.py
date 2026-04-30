@@ -2,12 +2,15 @@ from odoo import _, api, fields, models
 from dateutil.relativedelta import relativedelta
 from odoo.exceptions import AccessError, UserError
 from odoo.tools.float_utils import float_compare, float_is_zero
+from datetime import timedelta
+from markupsafe import escape
 
 
 class EstateProperty(models.Model):
     _name = 'estate.property'
     _description = 'Estate Property'
     _order = 'id desc'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     #  UI CONTROL: Make fields readonly for Estate Users
 
@@ -153,7 +156,7 @@ class EstateProperty(models.Model):
 
     active = fields.Boolean(default=True)
 
-    name = fields.Char(require=True)
+    name = fields.Char(required=True, tracking=True)
     description = fields.Text()
     postcode = fields.Char()
 
@@ -163,11 +166,10 @@ class EstateProperty(models.Model):
         default=lambda self: fields.Date.today() + relativedelta(months=3)
     )
 
-    expected_price = fields.Float(require=True)
+    expected_price = fields.Float(required=True, tracking=True)
 
     # Selling price updated only via accepted offer
-    selling_price = fields.Float(copy=False, readonly=True)
-
+    selling_price = fields.Float(copy=False, readonly=True, tracking=True)
     bedrooms = fields.Integer(default=2)
     living_area = fields.Integer(string='Living Area (sqm)')
     facades = fields.Integer()
@@ -198,9 +200,9 @@ class EstateProperty(models.Model):
         ],
         required=True,
         copy=False,
-        default='new'
+        default='new',
+        tracking=True
     )
-
     #  RELATIONAL FIELDS
 
     property_type_id = fields.Many2one(
@@ -211,15 +213,16 @@ class EstateProperty(models.Model):
     buyer_id = fields.Many2one(
         'res.partner',
         string='Buyer',
-        copy=False
+        copy=False,
+        tracking=True
     )
 
     salesperson_id = fields.Many2one(
         'res.users',
         string='Salesperson',
-        default=lambda self: self.env.user
+        default=lambda self: self.env.user,
+        tracking=True
     )
-
     tag_ids = fields.Many2many(
         'estate.property.tag',
         string='Tags'
@@ -317,6 +320,11 @@ class EstateProperty(models.Model):
                 raise UserError("A cancelled property cannot be sold.")
             record.write({'state': 'sold'})
 
+            record._notify_accountant_property_sold()
+
+            #  Notify buyer when property is sold
+            record._notify_buyer_property_sold()
+
     #  DELETE RESTRICTION
     @api.ondelete(at_uninstall=False)
     def _check_property_deletion(self):
@@ -330,3 +338,75 @@ class EstateProperty(models.Model):
                 raise UserError(
                     "You can only delete properties in New or Cancelled state."
                 )
+
+    def _notify_accountant_property_sold(self):
+        for property_rec in self:
+
+            # Get accountants
+            accountants = self.env['res.users'].search([
+                ('groups_id', 'in', self.env.ref('account.group_account_user').id)
+            ])
+
+            if not accountants:
+                continue
+
+            partner_ids = accountants.mapped('partner_id.id')
+
+            # Clean message (no HTML)
+            body = (
+                f"SOLD\n\n"
+                f"Property: {property_rec.name}\n"
+                f"Selling Price: ${property_rec.selling_price:,.2f}\n"
+                f"Buyer: {property_rec.buyer_id.name if property_rec.buyer_id else 'N/A'}"
+            )
+
+            # Send notification (Inbox + popup)
+            property_rec.message_post(
+                body=body,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment',
+                partner_ids=partner_ids,
+                author_id=self.env.user.partner_id.id,
+            )
+
+            # Create activity
+            for user in accountants:
+                property_rec.activity_schedule(
+                    activity_type_id=self.env.ref('mail.mail_activity_data_todo').id,
+                    user_id=user.id,
+                    summary="Review Property Invoice",
+                    note=f"Please review invoice for property: {property_rec.name}",
+                    date_deadline=fields.Date.context_today(property_rec) + timedelta(days=15)                )
+
+    def _notify_buyer_property_sold(self):
+        for record in self:
+            buyer = record.buyer_id
+
+            if not buyer:
+                continue
+
+            # Find buyer user
+            buyer_user = self.env['res.users'].search(
+                [('partner_id', '=', buyer.id)],
+                limit=1
+            )
+
+            if not buyer_user:
+                continue
+
+            # Message (clean text → no HTML issues)
+            body = (
+                f"SOLD\n\n"
+                f"Property: {record.name}\n"
+                f"Selling Price: ${record.selling_price:,.2f}\n"
+                f"Buyer: {buyer.name}"
+            )
+
+            # Send notification (Inbox + popup)
+            record.message_post(
+                body=body,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment',
+                partner_ids=[buyer_user.partner_id.id],
+                author_id=self.env.user.partner_id.id,
+            )

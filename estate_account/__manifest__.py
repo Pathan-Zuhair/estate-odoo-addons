@@ -6,6 +6,7 @@
     'depends': [
         'estate',
         'account',
+        'mail',
     ],
     'sequence': 2,
     'data': ['views/estate_property_invoice_page.xml'],

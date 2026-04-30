@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates xml:space="preserve">
+    <t t-inherit="mail.ActivityMenu" t-inherit-mode="extension">
+        <xpath expr="//span[contains(@class, 'o-mail-ActivityMenu-counter')]/t" position="replace">
+            <t t-esc="totalWithFuture"/>
+        </xpath>
+    </t>
+</templates>

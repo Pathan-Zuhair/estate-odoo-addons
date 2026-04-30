@@ -4,12 +4,13 @@
     'summary': 'A Ready To Use Module For Real Estate Business',
     'category': 'Tutorial',
     'author': 'Zuhair',
-    'depends': ['base', 'account'],
+    'depends': ['base', 'account', 'mail'],
     'sequence': 1,
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
         'security/estate_rules.xml',
+        'data/mail_template.xml',
         'views/estate_property_views.xml',
         'views/estate_property_offer_views.xml',
         'views/estate_property_type_views.xml',
@@ -18,6 +19,12 @@
         'views/estate_menus.xml',
 
     ],
+    "assets": {
+        "web.assets_backend": [
+            "estate/static/src/js/activity_badge_patch.js",
+            "estate/static/src/xml/activity_menu_patch.xml",
+        ],
+    },
     'installable': True,
     'application': True,
 }
