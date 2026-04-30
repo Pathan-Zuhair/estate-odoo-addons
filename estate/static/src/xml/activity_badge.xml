@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="mail.ActivityMenu" t-inherit-mode="extension" owl="1">
+        <xpath expr="//button/span[contains(@class, 'o-mail-ActivityMenu-counter')]" position="replace">
+            <span t-if="activityCounterDisplay" class="o-mail-ActivityMenu-counter badge rounded-pill">
+                <t t-esc="activityCounterDisplay"/>
+            </span>
+        </xpath>
+    </t>
+</templates>

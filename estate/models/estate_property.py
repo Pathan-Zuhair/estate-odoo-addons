@@ -2,6 +2,7 @@ from odoo import models, fields, api
 from dateutil.relativedelta import relativedelta
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare, float_is_zero
+from markupsafe import Markup
 
 
 class EstateProperty(models.Model):
@@ -116,7 +117,6 @@ class EstateProperty(models.Model):
     @api.depends('state')
     def _compute_color(self):
         for rec in self:
-
             if rec.state == 'sold':
                 rec.color = 10
             elif rec.state == 'cancelled':
@@ -171,25 +171,46 @@ class EstateProperty(models.Model):
 
             record.state = 'sold'
 
-            # ✅ FIND ACCOUNTANT USERS
             accountant_group = self.env.ref('estate.group_estate_accountant')
             accountant_users = accountant_group.users
-
             partners = accountant_users.mapped('partner_id').ids
 
-            # ✅ SEND NOTIFICATION
             record.message_post(
-                body=f"""Property Sold
-
-    Property: {record.name}
-    Selling Price: {record.selling_price}
-
-    Please review and create invoice.
-    """,
+                body=Markup(f"""
+            <p><b>Property Sold</b></p>
+            <p>
+            Property: {record.name}<br/>
+            Selling Price: {record.selling_price}
+            </p>
+            <p>Please review and create invoice.</p>
+            """),
                 partner_ids=partners,
-                message_type="notification",
+                message_type="comment",
                 subtype_xmlid="mail.mt_comment"
             )
+
+            activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
+            if activity_type:
+                for accountant in accountant_users:
+                    existing_activity = self.env['mail.activity'].search_count([
+                        ('res_model', '=', 'estate.property'),
+                        ('res_id', '=', record.id),
+                        ('user_id', '=', accountant.id),
+                        ('activity_type_id', '=', activity_type.id),
+                        ('summary', '=', 'Create invoice for sold property'),
+                    ])
+                    if not existing_activity:
+                        record.activity_schedule(
+                            activity_type_id=activity_type.id,
+                            user_id=accountant.id,
+                            summary='Create invoice for sold property',
+                            note=f"""
+Property: {record.name}
+Selling Price: {record.selling_price}
+Please create and validate the customer invoice.
+""",
+                            date_deadline=fields.Date.today(),
+                        )
 
     @api.constrains('selling_price', 'expected_price')
     def _check_selling_price(self):

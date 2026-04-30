@@ -64,6 +64,8 @@ class EstatePropertyOffer(models.Model):
         store=True
     )
 
+    activity_id = fields.Many2one('mail.activity', string="Activity", copy=False)
+
     def action_delete_offer(self):
         for record in self:
             if record.status in ('accepted', 'refused'):
@@ -110,40 +112,43 @@ class EstatePropertyOffer(models.Model):
                 raise UserError("You cannot create an offer lower than an existing offer.")
 
         record = super().create(vals)
-
         property_rec = record.property_id
 
-        # ✅ Prepare partners safely
         partners = []
         if property_rec.salesperson_id:
             partners.append(property_rec.salesperson_id.partner_id.id)
         if record.partner_id:
             partners.append(record.partner_id.id)
 
-        # ✅ CHATTER MESSAGE (FIXED POSITION)
         property_rec.message_post(
-            body=f"""
-    <p><b>New Offer Received</b></p>
-    <p>
-    Buyer: {record.partner_id.name}<br/>
-    Amount: {record.price}
-    </p>
-    """,
+            body=Markup(f"""
+                <p><b>New Offer Received</b></p>
+                <p>
+                Buyer: {record.partner_id.name}<br/>
+                Amount: {record.price}
+                </p>
+            """),
             partner_ids=partners,
             message_type="comment",
             subtype_xmlid="mail.mt_comment"
         )
 
-        # ✅ ACTIVITY (FOR BUTTONS)
         activity_type = self.env.ref('mail.mail_activity_data_todo')
 
         if property_rec.salesperson_id:
-            property_rec.activity_schedule(
+            activity = property_rec.activity_schedule(
                 activity_type_id=activity_type.id,
                 user_id=property_rec.salesperson_id.id,
                 summary="Review new offer",
-                note=f"Offer from {record.partner_id.name} for {record.price}",
+                note=f"""
+        Offer from {record.partner_id.name}
+        Amount: {record.price}
+        Deadline: {record.date_deadline}
+        """,
+                date_deadline=record.date_deadline
             )
+
+            record.activity_id = activity.id if activity else False
 
         return record
 
@@ -171,18 +176,27 @@ class EstatePropertyOffer(models.Model):
             if record.partner_id:
                 partners.append(record.partner_id.id)
 
-                property_rec.message_post(
-                    body=Markup(f"""
-                <p><b>Offer Accepted</b></p>
-                <p>
-                Buyer: {record.partner_id.name}<br/>
-                Final Price: {record.price}
-                </p>
+            property_rec.message_post(
+                body=Markup(f"""
+                    <p><b style="color:green;">Offer Accepted</b></p>
+                    <p>
+                    Buyer: {record.partner_id.name}<br/>
+                    Final Price: {record.price}
+                    </p>
                 """),
-                    partner_ids=partners,
-                    message_type="comment",
-                    subtype_xmlid="mail.mt_comment"
-                )
+                partner_ids=partners,
+                message_type="comment",
+                subtype_xmlid="mail.mt_comment"
+            )
+
+            activity_type = self.env.ref('mail.mail_activity_data_todo')
+
+            activities = property_rec.activity_ids.filtered(
+                lambda act: act.activity_type_id == activity_type
+            )
+
+            for act in activities:
+                act.action_feedback(feedback="Offer accepted")
 
     def action_refuse(self):
         for record in self:
@@ -190,10 +204,8 @@ class EstatePropertyOffer(models.Model):
                 raise UserError("You cannot refuse offers on a sold or cancelled property.")
 
             record.status = 'refused'
-
             property_rec = record.property_id
 
-            # ✅ EXISTING LOGIC (UNCHANGED)
             accepted_offers = property_rec.offer_ids.filtered(lambda o: o.status == 'accepted')
 
             if not accepted_offers:
@@ -203,36 +215,35 @@ class EstatePropertyOffer(models.Model):
                     'selling_price': 0,
                 })
 
-            # ✅ PARTNERS FOR NOTIFICATION
             partners = []
             if property_rec.salesperson_id:
                 partners.append(property_rec.salesperson_id.partner_id.id)
             if record.partner_id:
                 partners.append(record.partner_id.id)
 
-            # ✅ CHATTER MESSAGE (STYLED)
             property_rec.message_post(
                 body=Markup(f"""
-    <p><b style="color:red;">Offer Refused</b></p>
-    <p>
-    Buyer: {record.partner_id.name}<br/>
-    Amount: {record.price}
-    </p>
-    """),
+                    <p><b style="color:red;">Offer Refused</b></p>
+                    <p>
+                    Buyer: {record.partner_id.name}<br/>
+                    Amount: {record.price}
+                    </p>
+                """),
                 partner_ids=partners,
                 message_type="comment",
                 subtype_xmlid="mail.mt_comment"
             )
 
-            # 🟢 OPTIONAL: REMOVE ACTIVITY (clean UI)
+            activity_type = self.env.ref('mail.mail_activity_data_todo')
+
             activities = property_rec.activity_ids.filtered(
-                lambda act: act.summary == "Review new offer"
+                lambda act: act.activity_type_id == activity_type
             )
-            activities.unlink()
+
+            for act in activities:
+                act.action_feedback(feedback="Offer refused")
 
     def unlink(self):
-        properties = self.mapped('property_id')
-
         for record in self:
             if record.status == 'accepted':
                 raise UserError("Accepted or Refused offers cannot be deleted.")
@@ -244,9 +255,7 @@ class EstatePropertyOffer(models.Model):
                 if record.property_id.state in ('sold', 'cancelled'):
                     raise UserError("You cannot delete offers for sold or cancelled properties.")
 
-        res = super().unlink()
-
-        return res
+        return super().unlink()
 
     def write(self, vals):
         if self.env.user.has_group('estate.group_estate_buyer'):

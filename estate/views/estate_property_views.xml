@@ -68,17 +68,15 @@
 
                 <sheet>
 
-                     <!-- 🟢 SOLD -->
-        <widget name="web_ribbon"
-                title="Sold"
-                bg_color="bg-success"
-                invisible="state != 'sold'"/>
+                    <widget name="web_ribbon"
+                            title="Sold"
+                            bg_color="bg-success"
+                            invisible="state != 'sold'"/>
 
-        <!-- ⚫ CANCELLED -->
-        <widget name="web_ribbon"
-                title="Cancelled"
-                bg_color="bg-secondary"
-                invisible="state != 'cancelled'"/>
+                    <widget name="web_ribbon"
+                            title="Cancelled"
+                            bg_color="bg-secondary"
+                            invisible="state != 'cancelled'"/>
 
                     <div class="oe_title">
                         <h1>
@@ -285,66 +283,64 @@
     </record>
 
     <record id="estate_property_kanban_view" model="ir.ui.view">
-    <field name="name">estate.property.kanban</field>
-    <field name="model">estate.property</field>
-    <field name="arch" type="xml">
-        <kanban group_create="false" group_edit="false" group_delete="false" class="o_kanban_color">
+        <field name="name">estate.property.kanban</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <kanban group_create="false" group_edit="false" group_delete="false" class="o_kanban_color">
 
-            <field name="name"/>
-            <field name="expected_price"/>
-            <field name="best_price"/>
-            <field name="selling_price"/>
-            <field name="state"/>
-            <field name="tag_ids"/>
-            <field name="color"/>
+                <field name="name"/>
+                <field name="expected_price"/>
+                <field name="best_price"/>
+                <field name="selling_price"/>
+                <field name="state"/>
+                <field name="tag_ids"/>
+                <field name="color"/>
 
-            <templates>
-                <t t-name="kanban-box">
-                    <div t-attf-class="oe_kanban_global_click o_kanban_record oe_kanban_color_#{record.color.raw_value} position-relative overflow-hidden">
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click o_kanban_record oe_kanban_color_#{record.color.raw_value} position-relative overflow-hidden">
 
-                        <strong class="o_kanban_record_title">
-                            <field name="name"/>
+                            <strong class="o_kanban_record_title">
+                                <field name="name"/>
+                            </strong>
 
-                        </strong>
+                            <div class="mt8">
 
-                        <div class="mt8">
+                                <div>
+                                    <strong>Expected:</strong>
+                                    <field name="expected_price"/>
+                                </div>
 
-                            <div>
-                                <strong>Expected:</strong>
-                                <field name="expected_price"/>
+                                <div t-if="record.state.raw_value == 'offer_received'">
+                                    <strong>Best Offer:</strong>
+                                    <field name="best_price"/>
+                                </div>
+
+                                <div t-if="record.state.raw_value == 'offer_accepted'">
+                                    <strong>Selling Price:</strong>
+                                    <field name="selling_price"/>
+                                </div>
+
                             </div>
 
-                            <div t-if="record.state.raw_value == 'offer_received'">
-                                <strong>Best Offer:</strong>
-                                <field name="best_price"/>
-                            </div>
-
-                            <div t-if="record.state.raw_value == 'offer_accepted'">
-                                <strong>Selling Price:</strong>
-                                <field name="selling_price"/>
+                            <div class="mt8">
+                                <field name="tag_ids"
+                                       widget="many2many_tags"
+                                       options="{'color_field': 'color'}"/>
                             </div>
 
                         </div>
+                    </t>
+                </templates>
 
-                        <div class="mt8">
-                            <field name="tag_ids"
-                                   widget="many2many_tags"
-                                   options="{'color_field': 'color'}"/>
-                        </div>
-
-                    </div>
-                </t>
-            </templates>
-
-        </kanban>
-    </field>
-</record>
+            </kanban>
+        </field>
+    </record>
 
     <record id="action_estate_property" model="ir.actions.act_window">
         <field name="name">Properties</field>
         <field name="res_model">estate.property</field>
         <field name="view_mode">kanban,list,form</field>
-
         <field name="context">
             {'search_default_available': 1, 'group_by': 'property_type_id'}
         </field>
