@@ -321,6 +321,11 @@
                                     <field name="selling_price"/>
                                 </div>
 
+                                <div t-if="record.state.raw_value == 'sold'">
+                                    <strong>Sold Price:</strong>
+                                    <field name="selling_price"/>
+                                </div>
+
                             </div>
 
                             <div class="mt8">
